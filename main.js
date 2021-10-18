@@ -6,12 +6,17 @@ class Ball{
         this.width = 4;
         this.height = 4;
 
-        //velocity, split into  its x and y components
+        //velocity, split into its x and y components
         this.velX = 0;
         this.velY = 0;
     }
 
     move(){
+        //bounce off the top and bottom sides
+        if(this.y < 1 || this.y >145){
+            this.velY = this.velY * (-1)
+        }
+
         this.x = this.x + this.velX;
         this.y = this.y + this.velY;
     }
@@ -36,6 +41,12 @@ class Player{
     }
 
     move(delta_y){
+        if(this.y < 1 && delta_y < 0){
+            return;
+        }
+        if(this.y > 123 && delta_y > 0){
+            return;
+        }
         this.y = this.y + delta_y;
     }
 }
