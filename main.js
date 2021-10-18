@@ -1,6 +1,6 @@
 let canvas = document.getElementById("gb");
 const gameboard = canvas.getContext("2d");
-gameboard.fillStyle = "red";
+gameboard.fillStyle = "white";
 
 class Ball{
     constructor(){
