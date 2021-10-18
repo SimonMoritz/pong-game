@@ -14,7 +14,7 @@ class Ball{
     move(){
         //bounce off the top and bottom sides
         if(this.y < 1 || this.y >145){
-            this.velY = this.velY * (-1)
+            this.velY *= (-1)
         }
 
         this.x = this.x + this.velX;
@@ -51,7 +51,7 @@ class Player{
     }
 }
 
-//gameboard and coloring of movingobjects
+//gameboard and coloring of moving objects
 let canvas = document.getElementById("gb");
 const gameboard = canvas.getContext("2d");
 gameboard.fillStyle = "white";
@@ -73,13 +73,14 @@ function createFrame(){
 //variables for key press
 let isArrowUpPressed = false, isArrowDownPressed = false, isEPressed = false, isDPressed = false;
 
+//determining if key is pressed
 document.addEventListener('keydown', function(event){
     let key = event.key;
     switch(key){
-        case 'ArrowUp':
+        case 'o':
             isArrowUpPressed = true;
             break;
-        case 'ArrowDown':
+        case 'k':
             isArrowDownPressed = true;
             break;
         case 'e':
@@ -94,10 +95,10 @@ document.addEventListener('keydown', function(event){
 document.addEventListener('keyup', function(event){
     let key = event.key;
     switch(key){
-        case 'ArrowUp':
+        case 'o':
             isArrowUpPressed = false;
             break;
-        case 'ArrowDown':
+        case 'k':
             isArrowDownPressed = false;
             break;
         case 'e':
@@ -109,12 +110,32 @@ document.addEventListener('keyup', function(event){
     }
 });
 
+function reflectRight(ball, leftPlayer) {
+    if(20 <= ball.x && ball.x <= 25){
+        let relativeBallPosition = ball.y - (leftPlayer.y);
+        if(0 <= relativeBallPosition && relativeBallPosition <= 26){
+            ball.velX *= (-1)
+        }
+    }
+}
+
+function reflectLeft(ball, rightPlayer) {
+    if(275 <= ball.x && ball.x <= 280){
+        let relativeBallPosition = ball.y - (rightPlayer.y);
+        if(0 <= relativeBallPosition && relativeBallPosition <= 26){
+            ball.velX *= (-1)
+        }
+    }
+}
+
+
 //starting velocity ball
-ball.velX = 2;
-ball.velY = 0.5;
+ball.velX = -1;
+ball.velY = -0.5;
 
 //main function for game
 setInterval(function(){
+    //move players
     if(isArrowDownPressed){
         rightPlayer.move(2);
     }
@@ -129,7 +150,15 @@ setInterval(function(){
         leftPlayer.move(-2);
     }
 
+    //move ball
     ball.move();
 
+    //determine if any player reflects the ball
+    if(ball.velX < 0){
+        reflectRight(ball, leftPlayer);
+    } 
+    else{
+        reflectLeft(ball, rightPlayer);
+    }
     createFrame();
 }, 10);
