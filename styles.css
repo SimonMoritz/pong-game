@@ -15,8 +15,8 @@ canvas.gameboard {
     margin-top: 10%;
     display: block;
     width: 700px;
-    height: 400px;
+    height: 500px;
     border: solid;
-    border-color: aliceblue;
+    border-color: white;
     background-color: black;
 }
