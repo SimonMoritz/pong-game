@@ -1,14 +1,19 @@
 class Ball{
     constructor(){
+        //starting coordinates
         this.x = 148;
         this.y = 73;
         this.width = 4;
         this.height = 4;
+
+        //velocity, split into  its x and y components
+        this.velX = 0;
+        this.velY = 0;
     }
 
-    move(delta_x, delta_y){
-        this.x = this.x + delta_x;
-        this.y =this.y + delta_y;
+    move(){
+        this.x = this.x + this.velX;
+        this.y = this.y + this.velY;
     }
 }
 
@@ -24,7 +29,7 @@ class Player{
         else{
             console.error("choose playing side, either 'left' or 'right'");
         }
-        
+
         this.y = 62;
         this.width = 5;
         this.height = 26;
@@ -35,22 +40,24 @@ class Player{
     }
 }
 
+//gameboard and coloring of movingobjects
+let canvas = document.getElementById("gb");
+const gameboard = canvas.getContext("2d");
+gameboard.fillStyle = "white";
+
+
+//create moving objects
+let ball = new Ball();
+let leftPlayer = new Player('left');
+let rightPlayer = new Player('right');
+
+//update canvas
 function createFrame(){
     gameboard.clearRect(0,0,canvas.width, canvas.height);
     gameboard.fillRect(ball.x, ball.y, ball.width, ball.height);
     gameboard.fillRect(leftPlayer.x, leftPlayer.y, leftPlayer.width, leftPlayer.height);
     gameboard.fillRect(rightPlayer.x,rightPlayer.y, rightPlayer.width, rightPlayer.height);
 }
-
-let canvas = document.getElementById("gb");
-const gameboard = canvas.getContext("2d");
-gameboard.fillStyle = "white";
-gameboard.save();
-
-//create moving objects
-let ball = new Ball();
-let leftPlayer = new Player('left');
-let rightPlayer = new Player('right');
 
 //variables for key press
 let isArrowUpPressed = false, isArrowDownPressed = false, isEPressed = false, isDPressed = false;
@@ -91,7 +98,11 @@ document.addEventListener('keyup', function(event){
     }
 });
 
-createFrame();
+//starting velocity ball
+ball.velX = 2;
+ball.velY = 0.5;
+
+//main function for game
 setInterval(function(){
     if(isArrowDownPressed){
         rightPlayer.move(2);
@@ -106,6 +117,8 @@ setInterval(function(){
     if(isEPressed){
         leftPlayer.move(-2);
     }
+
+    ball.move();
 
     createFrame();
 }, 10);
