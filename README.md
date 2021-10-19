@@ -1,4 +1,4 @@
 # pong-game
 Pong implemented in JavaScript.
 
-Simple game designed by using a canvas object, each moving part of the game is represented as a class.
+Simple game designed by using a canvas object. Control the left side with w as up and s as down, the right player is controlled by the arrows.
