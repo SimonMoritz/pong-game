@@ -53,6 +53,7 @@ class Player{
 let canvas = document.getElementById("gb");
 const gameboard = canvas.getContext("2d");
 gameboard.fillStyle = "white";
+gameboard.font = '30px serif';
 
 //scoring
 let leftScoreNode = document.getElementById("leftScore");
@@ -76,6 +77,11 @@ function createFrame(){
 
 //variables for key press
 let isArrowUpPressed = false, isArrowDownPressed = false, isEPressed = false, isDPressed = false;
+
+
+gameboard.fillText("Click to play", 65 , 80)
+let playing;
+let mainRutine;
 
 //determining if key is pressed
 document.addEventListener('keydown', function(event){
@@ -174,10 +180,10 @@ function resetScore(params) {
     leftScore = 0;
     rightScoreNode.innerHTML = rightScore.toString();
     leftScoreNode.innerHTML = leftScore.toString();
-    
+    clearInterval(mainRutine);
+    gameboard.fillText("Click to play", 65 , 80);
+    playing = false;
 }
-
-resetScore();
 
 //starting velocity ball
 ball.velX = -1;
@@ -213,10 +219,6 @@ function subrutine() {
 }
 
 
-gameboard.font = '30px serif';
-gameboard.fillText("Click to play", 65 , 80)
-let playing = false;
-let mainRutine;
 
 canvas.addEventListener('click', function() {
     if(!playing){
