@@ -120,23 +120,59 @@ document.addEventListener('keyup', function(event){
     }
 });
 
+//determining velocity 
+function relativeHit(position){
+    let direction;
+    if(ball.velY < 0){
+        direction = -1;
+    }
+    else {
+        direction = 1;
+    }
+
+    if(position < 4){
+        return 0.6 * direction;
+    }
+    else if(position < 7){
+        return 0.4 * direction;
+    }
+    else if(position < 9){
+        return 0.2 * direction;
+    }
+    else if(position < 15){
+        return 0;
+    }
+    else if(position < 19){
+        return 0.2 * -direction;
+    }
+    else if(position < 22){
+        return 0.4 * -direction;
+    }
+    else{
+        return 0.6 * -direction;
+    }
+}
+
 function reflectRight() {
     if(20 <= ball.x && ball.x <= 20+leftPlayer.width){
         let relativeBallPosition = ball.y - (leftPlayer.y);
         if(0 <= relativeBallPosition && relativeBallPosition <= leftPlayer.height){
             ball.velX *= (-1)
+            ball.velY += relativeHit(relativeBallPosition);
         }
     }
 }
 
 function reflectLeft() {
     if(canvas.width - 20 - rightPlayer.width <= ball.x && ball.x <= canvas.width - 20){
-        let relativeBallPosition = ball.y - (rightPlayer.y);
+        let relativeBallPosition = ball.y - rightPlayer.y;
         if(0 <= relativeBallPosition && relativeBallPosition <= rightPlayer.height){
-            ball.velX *= (-1)
+            ball.velX *= (-1);
+            ball.velY += relativeHit(relativeBallPosition);
         }
     }
 }
+
 
 //determines if someone scored and returns true
 function checkIfBallOutOfBounds() {
@@ -153,9 +189,10 @@ function checkIfBallOutOfBounds() {
 //game reset
 function newRound() {
     ball.x = canvas.width/2 - ball.width/2;
-    ball.y = canvas.height/2 - ball.height/2
+    ball.y = canvas.height/2 - ball.height/2;
+    ball.velY = Math.random()-0.5;
     leftPlayer.y = canvas.height/2 - leftPlayer.height/2;
-    rightPlayer.y = canvas.height/2 - leftPlayer.height/2
+    rightPlayer.y = canvas.height/2 - leftPlayer.height/2;
 }
 
 function incrementScore(player) {
@@ -186,8 +223,8 @@ function resetScore(params) {
 }
 
 //starting velocity ball
-ball.velX = -1;
-ball.velY = -0.5;
+ball.velX = 1.5;
+ball.velY = Math.random()-0.5;
 
 function subrutine() {
     if(isArrowDownPressed){
