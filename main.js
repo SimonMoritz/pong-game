@@ -10,6 +10,7 @@ class Ball{
         this.velY = 0;
     }
 
+    //ball movement
     move(){
         //bounce off the top and bottom sides
         if(this.y < 1 || this.y >145){
@@ -23,6 +24,7 @@ class Ball{
 
 class Player{
     constructor(side){
+        //starting coordinates
         this.side = side;
         this.width = 5;
         this.height = 26;
@@ -38,6 +40,7 @@ class Player{
         this.y = canvas.height/2 - this.height/2;
     }
 
+    //player movement
     move(delta_y){
         if(this.y < 1 && delta_y < 0){
             return;
@@ -100,7 +103,6 @@ document.addEventListener('keydown', function(event){
             break;
     }
 });
-
 document.addEventListener('keyup', function(event){
     let key = event.key;
     switch(key){
@@ -119,9 +121,10 @@ document.addEventListener('keyup', function(event){
     }
 });
 
-//determining velocity 
+//determines the instant change in velocity (y-component) of a reflected ball
 function relativeHit(position){
     let direction;
+    let deltaVelY;
     if(ball.velY < 0){
         direction = -1;
     }
@@ -129,29 +132,21 @@ function relativeHit(position){
         direction = 1;
     }
 
-    if(position < 4){
-        return 0.6 * direction;
+    if(position < 13){
+        deltaVelY = Math.min(1, 1/(position));
+        return -deltaVelY;
     }
-    else if(position < 7){
-        return 0.4 * direction;
-    }
-    else if(position < 9){
-        return 0.2 * direction;
-    }
-    else if(position < 15){
-        return 0;
-    }
-    else if(position < 19){
-        return 0.2 * direction;
-    }
-    else if(position < 22){
-        return 0.4 * direction;
+    if(position > 14){
+        newPos = Math.abs(position - 26);
+        deltaVelY = Math.min(1, 1/(newPos));
+        return deltaVelY;
     }
     else{
-        return 0.6 * direction;
+        return 0;
     }
 }
 
+//determining the vector of velocity for ball if it hits right player
 function reflectRight() {
     if(20 <= ball.x && ball.x <= 20+leftPlayer.width){
         let relativeBallPosition = ball.y - (leftPlayer.y);
@@ -162,6 +157,7 @@ function reflectRight() {
     }
 }
 
+//determines the vector of velocity for ball if it hits left player
 function reflectLeft() {
     if(canvas.width - 20 - rightPlayer.width <= ball.x && ball.x <= canvas.width - 20){
         let relativeBallPosition = ball.y - rightPlayer.y;
@@ -173,7 +169,7 @@ function reflectLeft() {
 }
 
 
-//determines if someone scored and returns true
+//determines if someone scored
 function checkIfBallOutOfBounds() {
     if(ball.x < 0){
         incrementScore(leftPlayer);
@@ -194,6 +190,7 @@ function newRound() {
     rightPlayer.y = canvas.height/2 - leftPlayer.height/2;
 }
 
+//increment score
 function incrementScore(player) {
     if(player.side === 'left'){
         leftScore++;
@@ -212,6 +209,7 @@ function incrementScore(player) {
 }
 
 let mainRutine;
+//resets score -- end of game
 function resetScore(params) {
     rightScore = 0;
     leftScore = 0;
@@ -227,7 +225,8 @@ ball.velX = 1.5;
 ball.velY = Math.random()-0.5;
 
 
-function subrutine() {
+function gameplay() {
+    //user input movement
     if(isArrowDownPressed){
         rightPlayer.move(2);
     }
@@ -240,7 +239,6 @@ function subrutine() {
     if(isWPressed){
         leftPlayer.move(-2);
     }
-
     ball.move();
 
     //determine if any player reflects the ball
@@ -253,14 +251,15 @@ function subrutine() {
 
     //determine of one player has scored
     checkIfBallOutOfBounds();
+    
+    //create new drawings
     createFrame();
 }
 
-
-
+//gives the user ability to start and stop the game
 canvas.addEventListener('click', function() {
     if(!playing){
-        mainRutine = setInterval(subrutine, 10);
+        mainRutine = setInterval(gameplay, 10);
     }
     else{
         clearInterval(mainRutine);
