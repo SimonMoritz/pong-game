@@ -1,11 +1,10 @@
 class Ball{
     constructor(){
         //starting coordinates
-        this.x = 148;
-        this.y = 73;
         this.width = 4;
         this.height = 4;
-
+        this.x = canvas.width/2 - this.width/2;
+        this.y = canvas.height/2 - this.height/2;
         //velocity, split into its x and y components
         this.velX = 0;
         this.velY = 0;
@@ -25,29 +24,28 @@ class Ball{
 class Player{
     constructor(side){
         this.side = side;
+        this.width = 5;
+        this.height = 26;
         if(side === 'left'){
             this.x = 20;
         }
         else if(side === 'right'){
-            this.x = 275;
+            this.x = canvas.width - 20 - this.width;
         }
         else{
             console.error("choose playing side, either 'left' or 'right'");
         }
-
-        this.y = 62;
-        this.width = 5;
-        this.height = 26;
+        this.y = canvas.height/2 - this.height/2;
     }
 
     move(delta_y){
         if(this.y < 1 && delta_y < 0){
             return;
         }
-        if(this.y > 123 && delta_y > 0){
+        if(this.y > (canvas.height - this.height) && delta_y > 0){
             return;
         }
-        this.y = this.y + delta_y;
+        this.y +=  delta_y;
     }
 }
 
@@ -110,21 +108,51 @@ document.addEventListener('keyup', function(event){
     }
 });
 
-function reflectRight(ball, leftPlayer) {
-    if(20 <= ball.x && ball.x <= 25){
+function reflectRight() {
+    if(20 <= ball.x && ball.x <= 20+leftPlayer.width){
         let relativeBallPosition = ball.y - (leftPlayer.y);
-        if(0 <= relativeBallPosition && relativeBallPosition <= 26){
+        if(0 <= relativeBallPosition && relativeBallPosition <= leftPlayer.height){
             ball.velX *= (-1)
         }
     }
 }
 
-function reflectLeft(ball, rightPlayer) {
-    if(275 <= ball.x && ball.x <= 280){
+function reflectLeft() {
+    if(canvas.width - 20 - rightPlayer.width <= ball.x && ball.x <= canvas.width - 20){
         let relativeBallPosition = ball.y - (rightPlayer.y);
-        if(0 <= relativeBallPosition && relativeBallPosition <= 26){
+        if(0 <= relativeBallPosition && relativeBallPosition <= rightPlayer.height){
             ball.velX *= (-1)
         }
+    }
+}
+
+//determines if someone scored
+function checkIfBallOutOfBounds() {
+    if(ball.x < 0){
+        incrementScore(leftPlayer);
+        newRound();
+    }
+    else if(canvas.width < ball.x){
+        incrementScore(rightPlayer);
+        newRound();
+    }
+}
+
+//game reset
+function newRound() {
+    ball.x = canvas.width/2 - ball.width/2;
+    ball.y = canvas.height/2 - ball.height/2
+
+    leftPlayer.y = canvas.height/2 - leftPlayer.height/2;
+    rightPlayer.y = canvas.height/2 - leftPlayer.height/2
+}
+
+function incrementScore(player) {
+    if(player.side === 'left'){
+        
+    }
+    else if(player.side === 'right'){
+
     }
 }
 
@@ -135,7 +163,6 @@ ball.velY = -0.5;
 
 //main function for game
 setInterval(function(){
-    //move players
     if(isArrowDownPressed){
         rightPlayer.move(2);
     }
@@ -150,15 +177,17 @@ setInterval(function(){
         leftPlayer.move(-2);
     }
 
-    //move ball
     ball.move();
 
     //determine if any player reflects the ball
     if(ball.velX < 0){
-        reflectRight(ball, leftPlayer);
+        reflectRight();
     } 
     else{
-        reflectLeft(ball, rightPlayer);
+        reflectLeft();
     }
+
+    //determine of one player has scored
+    checkIfBallOutOfBounds();
     createFrame();
 }, 10);
