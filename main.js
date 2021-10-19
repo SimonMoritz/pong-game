@@ -76,28 +76,27 @@ function createFrame(){
 }
 
 //variables for key press
-let isArrowUpPressed = false, isArrowDownPressed = false, isEPressed = false, isDPressed = false;
+let isArrowUpPressed = false, isArrowDownPressed = false, isWPressed = false, isSPressed = false;
 
 
 gameboard.fillText("Click to play", 65 , 80)
 let playing;
-let mainRutine;
 
 //determining if key is pressed
 document.addEventListener('keydown', function(event){
     let key = event.key;
     switch(key){
-        case 'o':
+        case 'ArrowUp':
             isArrowUpPressed = true;
             break;
-        case 'k':
+        case 'ArrowDown':
             isArrowDownPressed = true;
             break;
-        case 'e':
-            isEPressed = true;
+        case 'w':
+            isWPressed = true;
             break;
-        case 'd':
-            isDPressed = true;
+        case 's':
+            isSPressed = true;
             break;
     }
 });
@@ -105,17 +104,17 @@ document.addEventListener('keydown', function(event){
 document.addEventListener('keyup', function(event){
     let key = event.key;
     switch(key){
-        case 'o':
+        case 'ArrowUp':
             isArrowUpPressed = false;
             break;
-        case 'k':
+        case 'ArrowDown':
             isArrowDownPressed = false;
             break;
-        case 'e':
-            isEPressed = false;
+        case 'w':
+            isWPressed = false;
             break;
-        case 'd':
-            isDPressed = false;
+        case 's':
+            isSPressed = false;
             break;
     }
 });
@@ -143,13 +142,13 @@ function relativeHit(position){
         return 0;
     }
     else if(position < 19){
-        return 0.2 * -direction;
+        return 0.2 * direction;
     }
     else if(position < 22){
-        return 0.4 * -direction;
+        return 0.4 * direction;
     }
     else{
-        return 0.6 * -direction;
+        return 0.6 * direction;
     }
 }
 
@@ -212,6 +211,7 @@ function incrementScore(player) {
     }
 }
 
+let mainRutine;
 function resetScore(params) {
     rightScore = 0;
     leftScore = 0;
@@ -226,6 +226,7 @@ function resetScore(params) {
 ball.velX = 1.5;
 ball.velY = Math.random()-0.5;
 
+
 function subrutine() {
     if(isArrowDownPressed){
         rightPlayer.move(2);
@@ -233,10 +234,10 @@ function subrutine() {
     if(isArrowUpPressed){
         rightPlayer.move(-2);
     }
-    if(isDPressed){
+    if(isSPressed){
         leftPlayer.move(2);
     }
-    if(isEPressed){
+    if(isWPressed){
         leftPlayer.move(-2);
     }
 
