@@ -54,6 +54,12 @@ let canvas = document.getElementById("gb");
 const gameboard = canvas.getContext("2d");
 gameboard.fillStyle = "white";
 
+//scoring
+let leftScoreNode = document.getElementById("leftScore");
+let rightScoreNode = document.getElementById("rightScore");
+let leftScore = 0;
+let rightScore = 0;
+
 
 //create moving objects
 let ball = new Ball();
@@ -126,7 +132,7 @@ function reflectLeft() {
     }
 }
 
-//determines if someone scored
+//determines if someone scored and returns true
 function checkIfBallOutOfBounds() {
     if(ball.x < 0){
         incrementScore(leftPlayer);
@@ -142,34 +148,48 @@ function checkIfBallOutOfBounds() {
 function newRound() {
     ball.x = canvas.width/2 - ball.width/2;
     ball.y = canvas.height/2 - ball.height/2
-
     leftPlayer.y = canvas.height/2 - leftPlayer.height/2;
     rightPlayer.y = canvas.height/2 - leftPlayer.height/2
 }
 
 function incrementScore(player) {
     if(player.side === 'left'){
-        
+        leftScore++;
+        rightScoreNode.innerHTML = leftScore.toString();
+        if(leftScore >= 10){
+            resetScore();
+        }
     }
     else if(player.side === 'right'){
-
+        rightScore++;
+        leftScoreNode.innerHTML = rightScore.toString();
+        if(rightScore >= 10){
+            resetScore();
+        }
     }
 }
 
+function resetScore(params) {
+    rightScore = 0;
+    leftScore = 0;
+    rightScoreNode.innerHTML = rightScore.toString();
+    leftScoreNode.innerHTML = leftScore.toString();
+    
+}
+
+resetScore();
 
 //starting velocity ball
 ball.velX = -1;
 ball.velY = -0.5;
 
-//main function for game
-setInterval(function(){
+function subrutine() {
     if(isArrowDownPressed){
         rightPlayer.move(2);
     }
     if(isArrowUpPressed){
         rightPlayer.move(-2);
     }
-
     if(isDPressed){
         leftPlayer.move(2);
     }
@@ -190,4 +210,21 @@ setInterval(function(){
     //determine of one player has scored
     checkIfBallOutOfBounds();
     createFrame();
-}, 10);
+}
+
+
+gameboard.font = '30px serif';
+gameboard.fillText("Click to play", 65 , 80)
+let playing = false;
+let mainRutine;
+
+canvas.addEventListener('click', function() {
+    if(!playing){
+        mainRutine = setInterval(subrutine, 10);
+    }
+    else{
+        clearInterval(mainRutine);
+    }
+    playing = !playing; 
+});
+
