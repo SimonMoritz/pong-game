@@ -17,8 +17,8 @@ class Ball{
             this.velY *= (-1)
         }
 
-        this.x = this.x + this.velX;
-        this.y = this.y + this.velY;
+        this.x += this.velX;
+        this.y += this.velY;
     }
 }
 
