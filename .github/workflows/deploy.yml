@@ -1,0 +1,23 @@
+name: build - deploy
+run-name: ${{ github.actor }} is building and deploying
+on: [push]
+jobs:
+  
+  build-image:
+    runs-on: self-hosted
+    steps:
+      - name: working-env-test
+        uses: actions/checkout@v4
+      - run: |
+          touch notes.txt
+          echo "this is a test" > notes.txt
+          grep -Fx "this is a test" notes.txt
+      - name: build image
+        uses: docker/setup-buildx-action@v3
+      - run: docker build -t pong-game .
+
+  run:
+    needs: build-image
+    runs-on: self-hosted
+    steps:
+      - run: touch helloworld.txt
