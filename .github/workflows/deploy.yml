@@ -2,10 +2,10 @@ name: build - deploy
 run-name: ${{ github.actor }} is building and deploying
 on: [push]
 jobs:
-  create-keys:
+  create-key-files:
     runs-on: self-hosted
     steps:
-      - name: add-keys
+      - name: create-key-files
         env:
           PRIVKEY: ${{secrets.PRIVKEY}}
           FULLCHAIN: ${{secrets.FULLCHAIN}}
@@ -16,11 +16,9 @@ jobs:
           touch fullchain.pem
           echo $FULLCHAIN > fullchain.pem 
   build-image:
-    needs: create-keys
+    needs: create-key-files
     runs-on: self-hosted
     steps:
-      - name: working-env-test
-        uses: actions/checkout@v4
       - run: |
           touch notes.txt
           echo "this is a test" > notes.txt
