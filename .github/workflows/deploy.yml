@@ -12,9 +12,9 @@ jobs:
         uses: actions/checkout@v4
       - run: | 
           touch privkey.pem
-          echo $PRIVKEY > privkey.pem
+          echo "$PRIVKEY" > privkey.pem
           touch fullchain.pem
-          echo $FULLCHAIN > fullchain.pem 
+          echo "$FULLCHAIN" > fullchain.pem 
   build-image:
     needs: create-key-files
     runs-on: self-hosted
