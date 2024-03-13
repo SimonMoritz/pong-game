@@ -13,7 +13,7 @@ const options = {
 	cert: fs.readFileSync('fullchain.pem'),
 }
 
-let server = http.createServer(options, function (req, res) {
+let server = https.createServer(options, function (req, res) {
   fileServer.serve(req, res)
   if (req == '/'){
     fs.readFile('index.html', function(err, data) {
@@ -25,6 +25,6 @@ let server = http.createServer(options, function (req, res) {
 })
 
 
-server.listen(port2, hostname2, () => {
-  console.log(`Server running at http://${hostname2}:${port2}/`);
+server.listen(port, hostname2, () => {
+  console.log(`Server running at http://${hostname2}:${port}/`);
 });

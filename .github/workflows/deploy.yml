@@ -2,8 +2,21 @@ name: build - deploy
 run-name: ${{ github.actor }} is building and deploying
 on: [push]
 jobs:
-  
+  create-keys:
+    runs-on: self-hosted
+    steps:
+      - name: add-keys
+        env:
+          PRIVKEY: ${{secrets.PRIVKEY}}
+          FULLCHAIN: ${{secrets.FULLCHAIN}}
+        uses: actions/checkout@v4
+      - run: | 
+          touch privkey.pem
+          echo $PRIVKEY > privkey.pem
+          touch fullchain.pem
+          echo $FULLCHAIN > fullchain.pem 
   build-image:
+    needs: create-keys
     runs-on: self-hosted
     steps:
       - name: working-env-test
