@@ -6,10 +6,10 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: create-key-files
+        uses: actions/checkout@v4
         env:
           PRIVKEY: ${{secrets.PRIVKEY}}
           FULLCHAIN: ${{secrets.FULLCHAIN}}
-        uses: actions/checkout@v4
       - run: | 
           touch privkey.pem
           echo "$PRIVKEY" > privkey.pem
