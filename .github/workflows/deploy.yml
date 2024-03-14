@@ -12,9 +12,9 @@ jobs:
           FULLCHAIN: ${{secrets.FULLCHAIN}}
       - run: | 
           touch privkey.pem
-          echo "$PRIVKEY" > privkey.pem
+          echo ${{secrets.PRIVKEY}} > privkey.pem
           touch fullchain.pem
-          echo "$FULLCHAIN" > fullchain.pem 
+          echo ${{secrets.FULLCHAIN}} > fullchain.pem 
   build-image:
     needs: create-key-files
     runs-on: self-hosted
