@@ -12,6 +12,6 @@ COPY . .
 
 RUN npm install
 
-EXPOSE 3002
+EXPOSE 443
 
 CMD node server.js

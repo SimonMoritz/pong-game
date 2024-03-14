@@ -2,11 +2,11 @@ const http = require('http');
 const https = require('https')
 const fs = require('fs');
 const hostname = '178.128.255.58';
-const hostname2 = '0.0.0.0';
+const hostname2 = '0.0.0.0'; // docker container
 const nStatic = require('node-static');
 const fileServer = new nStatic.Server('./public');
 const port = 443;
-const port2 = 3002;
+const port2 = 3002; // for testing
 
 const options = {
 	key: fs.readFileSync('privkey.pem'),
