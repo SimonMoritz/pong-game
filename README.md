@@ -7,4 +7,4 @@ Find it here:
 https://pong-game.dk
 
 ## CI/CD
-This web game is deployed with github actions, it should be easy reproduce on any self-hosted linux runner. See .github/workflows for details about jobs.
+This web game is deployed with github actions, it should be easy reproduce on any self-hosted linux runner. See .github/workflows for details.
