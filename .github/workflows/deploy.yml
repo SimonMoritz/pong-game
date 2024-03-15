@@ -31,4 +31,4 @@ jobs:
     needs: build-image
     runs-on: self-hosted
     steps:
-      - run: touch helloworld.txt
+      - run: docker run --name pong -dp 178.128.255.58:443:443 pong-game
