@@ -6,5 +6,5 @@ Simple game designed by using a canvas object. Control the left side with w as u
 Find it here:
 https://pong-game.dk
 
-# CI/CD
+## CI/CD
 This web game is deployed with github actions, it should be easy reproduce on any self-hosted linux runner. See .github/workflows for details about jobs.
