@@ -2,10 +2,10 @@ name: build - deploy
 run-name: ${{ github.actor }} is building and deploying
 on: [push]
 jobs:
-  create-key-files:
+  create-cert-key-files:
     runs-on: self-hosted
     steps:
-      - name: create-key-files
+      - name: create-private-key-file
         uses: actions/checkout@v4
         env:
           PRIVKEY: ${{secrets.PRIVKEY}}
@@ -16,7 +16,7 @@ jobs:
           touch fullchain.pem
           echo "${{secrets.FULLCHAIN}}" > fullchain.pem 
   build-image:
-    needs: create-key-files
+    needs: create-cert-key-files
     runs-on: self-hosted
     steps:
       - run: |
