@@ -35,5 +35,5 @@ jobs:
           docker stop pong
           docker rm pong
           docker run --name pong -dp "${{vars.IP}}:443:443" pong-game
-          docker container prune
-          docker image prune
+          echo "y" | docker container prune
+          echo "y" | docker image prune
