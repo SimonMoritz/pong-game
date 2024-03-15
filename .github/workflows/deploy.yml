@@ -31,4 +31,7 @@ jobs:
     needs: build-image
     runs-on: self-hosted
     steps:
-      - run: docker run --name pong -dp "${{vars.IP}}:443:443" pong-game
+      - run: | 
+          docker stop pong
+          docker rm pong
+          docker run --name pong -dp "${{vars.IP}}:443:443" pong-game
