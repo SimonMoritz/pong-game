@@ -1,6 +1,6 @@
 name: build - deploy
 run-name: ${{ github.actor }} is building and deploying
-on: [push]
+on: workflow_dispatch
 jobs:
   create-cert-key-files:
     runs-on: self-hosted
