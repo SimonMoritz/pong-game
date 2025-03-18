@@ -6,7 +6,6 @@ const hostname2 = '0.0.0.0'; // docker container
 const nStatic = require('node-static');
 const fileServer = new nStatic.Server('./public');
 const port = 443;
-const port2 = 3002; // for testing
 
 const options = {
 	key: fs.readFileSync('privkey.pem'),
