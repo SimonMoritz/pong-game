@@ -1,0 +1,42 @@
+// Pure game-logic constants and functions — no browser dependencies.
+// Loaded as a plain script in the browser (adds to global scope),
+// and imported as a CommonJS module in the Node.js test runner.
+
+const GAME = {
+    BALL_SIZE:     4,
+    PADDLE_WIDTH:  5,
+    PADDLE_HEIGHT: 26,
+    PADDLE_OFFSET: 20,   // horizontal distance of each paddle from the canvas edge
+    PADDLE_SPEED:  2,
+    BALL_SPEED_X:  1.5,
+    WIN_SCORE:     10,
+    WALL_MARGIN:   1,
+    AI_MAX_SPEED:  1.6,  // AI paddle speed — lower than PADDLE_SPEED so humans can win
+};
+
+// Calculates the Y velocity change when ball hits a paddle.
+// The paddle face is divided into three zones:
+//   - Upper zone (position < PADDLE_HEIGHT/2):       deflects ball upward
+//   - Center zone (PADDLE_HEIGHT/2 to /2+1):         no extra Y deflection
+//   - Lower zone (position > PADDLE_HEIGHT/2 + 1):   deflects ball downward
+// Deflection magnitude is 1/distance-from-edge, capped at 1 unit per hit.
+function relativeHit(position) {
+    const halfHeight = GAME.PADDLE_HEIGHT / 2;  // 13
+    let deltaVelY;
+
+    if (position < halfHeight) {
+        deltaVelY = Math.min(1, 1 / position);
+        return -deltaVelY;
+    }
+    if (position > halfHeight + 1) {
+        const newPos = Math.abs(position - GAME.PADDLE_HEIGHT);
+        deltaVelY = Math.min(1, 1 / newPos);
+        return deltaVelY;
+    }
+    return 0;
+}
+
+// Export for Node.js test runner; in the browser these become globals via <script>
+if (typeof module !== 'undefined') {
+    module.exports = { GAME, relativeHit };
+}
