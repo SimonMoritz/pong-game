@@ -5,14 +5,16 @@ const { GAME, relativeHit } = require('../public/game-logic.js');
 // --- GAME constants ---
 
 test('GAME constants have expected values', () => {
-    assert.equal(GAME.BALL_SIZE,     4);
-    assert.equal(GAME.PADDLE_WIDTH,  5);
-    assert.equal(GAME.PADDLE_HEIGHT, 26);
-    assert.equal(GAME.PADDLE_OFFSET, 20);
-    assert.equal(GAME.PADDLE_SPEED,  2);
-    assert.equal(GAME.BALL_SPEED_X,  1.5);
-    assert.equal(GAME.WIN_SCORE,     10);
-    assert.equal(GAME.WALL_MARGIN,   1);
+    assert.equal(GAME.BALL_SIZE,       4);
+    assert.equal(GAME.PADDLE_WIDTH,    5);
+    assert.equal(GAME.PADDLE_HEIGHT,   26);
+    assert.equal(GAME.PADDLE_OFFSET,   20);
+    assert.equal(GAME.PADDLE_SPEED,    2);
+    assert.equal(GAME.BALL_SPEED_X,    1.5);
+    assert.equal(GAME.WIN_SCORE,       10);
+    assert.equal(GAME.WALL_MARGIN,     1);
+    assert.equal(GAME.AI_MAX_SPEED,    1.6);
+    assert.equal(GAME.MAX_BALL_SPEED_Y, 3);
 });
 
 // --- relativeHit ---
@@ -60,9 +62,14 @@ test('relativeHit deflection is symmetric: top and bottom zones mirror each othe
 
 test('relativeHit delta is between -1 and 1 for all valid positions', () => {
     for (let pos = 0; pos <= GAME.PADDLE_HEIGHT; pos++) {
-        if (pos === 0) continue; // 1/0 would be Infinity, skip the degenerate case
+        if (pos === 0) continue; // tested separately below
         const delta = relativeHit(pos);
         assert.ok(delta >= -1 && delta <= 1,
             `relativeHit(${pos}) = ${delta} is out of [-1, 1] range`);
     }
+});
+
+test('relativeHit(0) returns -1, not Infinity (1/0 is guarded by Math.min cap)', () => {
+    // 1/0 === Infinity in JS, but Math.min(1, Infinity) === 1, so result is -1
+    assert.equal(relativeHit(0), -1);
 });

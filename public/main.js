@@ -118,6 +118,7 @@ function reflectLeft() {
         if(0 <= relativeBallPosition && relativeBallPosition <= leftPlayer.height){
             ball.velX *= (-1);
             ball.velY += relativeHit(relativeBallPosition);
+            ball.velY = Math.max(-GAME.MAX_BALL_SPEED_Y, Math.min(GAME.MAX_BALL_SPEED_Y, ball.velY));
         }
     }
 }
@@ -129,6 +130,7 @@ function reflectRight() {
         if(0 <= relativeBallPosition && relativeBallPosition <= rightPlayer.height){
             ball.velX *= (-1);
             ball.velY += relativeHit(relativeBallPosition);
+            ball.velY = Math.max(-GAME.MAX_BALL_SPEED_Y, Math.min(GAME.MAX_BALL_SPEED_Y, ball.velY));
         }
     }
 }
@@ -173,14 +175,14 @@ function incrementScore(player) {
     }
 }
 
-let mainRutine;
+let mainRoutine;
 //resets score -- end of game
 function resetScore() {
     rightScore = 0;
     leftScore  = 0;
     rightScoreNode.innerHTML = rightScore.toString();
     leftScoreNode.innerHTML  = leftScore.toString();
-    clearInterval(mainRutine);
+    clearInterval(mainRoutine);
     gameboard.fillText("Click to play", 65, 80);
     playing = false;
 }
@@ -229,10 +231,10 @@ function gameplay() {
 //gives the user ability to start and stop the game
 canvas.addEventListener('click', function() {
     if(!playing){
-        mainRutine = setInterval(gameplay, 10);
+        mainRoutine = setInterval(gameplay, 10);
     }
     else{
-        clearInterval(mainRutine);
+        clearInterval(mainRoutine);
     }
     playing = !playing;
 });
