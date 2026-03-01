@@ -8,7 +8,7 @@ const host = process.env.HOST || '0.0.0.0';
 let options;
 try {
     options = {
-        key:  fs.readFileSync('privkey.pem'),
+        key: fs.readFileSync('privkey.pem'),
         cert: fs.readFileSync('fullchain.pem'),
     };
 } catch (err) {

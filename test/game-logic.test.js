@@ -5,15 +5,15 @@ const { GAME, relativeHit } = require('../public/game-logic.js');
 // --- GAME constants ---
 
 test('GAME constants have expected values', () => {
-    assert.equal(GAME.BALL_SIZE,       4);
-    assert.equal(GAME.PADDLE_WIDTH,    5);
-    assert.equal(GAME.PADDLE_HEIGHT,   26);
-    assert.equal(GAME.PADDLE_OFFSET,   20);
-    assert.equal(GAME.PADDLE_SPEED,    2);
-    assert.equal(GAME.BALL_SPEED_X,    1.5);
-    assert.equal(GAME.WIN_SCORE,       10);
-    assert.equal(GAME.WALL_MARGIN,     1);
-    assert.equal(GAME.AI_MAX_SPEED,    1.6);
+    assert.equal(GAME.BALL_SIZE, 4);
+    assert.equal(GAME.PADDLE_WIDTH, 5);
+    assert.equal(GAME.PADDLE_HEIGHT, 26);
+    assert.equal(GAME.PADDLE_OFFSET, 20);
+    assert.equal(GAME.PADDLE_SPEED, 2);
+    assert.equal(GAME.BALL_SPEED_X, 1.5);
+    assert.equal(GAME.WIN_SCORE, 10);
+    assert.equal(GAME.WALL_MARGIN, 1);
+    assert.equal(GAME.AI_MAX_SPEED, 1.6);
     assert.equal(GAME.MAX_BALL_SPEED_Y, 3);
 });
 
@@ -45,7 +45,7 @@ test('relativeHit caps delta at 1 for extreme lower position', () => {
 });
 
 test('relativeHit gives smaller delta further from paddle edge', () => {
-    const deltaClose  = Math.abs(relativeHit(2));
+    const deltaClose = Math.abs(relativeHit(2));
     const deltaFurther = Math.abs(relativeHit(5));
     assert.ok(deltaClose >= deltaFurther, 'closer to edge should give >= deflection');
 });
@@ -53,9 +53,9 @@ test('relativeHit gives smaller delta further from paddle edge', () => {
 test('relativeHit deflection is symmetric: top and bottom zones mirror each other', () => {
     // position 5 is 8 units from top (distance 5)
     // position 21 is 5 units from bottom edge (|21-26|=5)
-    const topDelta    = relativeHit(5);
+    const topDelta = relativeHit(5);
     const bottomDelta = relativeHit(21);
-    assert.ok(topDelta < 0,    'top zone delta should be negative');
+    assert.ok(topDelta < 0, 'top zone delta should be negative');
     assert.ok(bottomDelta > 0, 'bottom zone delta should be positive');
     assert.equal(Math.abs(topDelta), Math.abs(bottomDelta));
 });

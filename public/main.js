@@ -1,18 +1,16 @@
-// GAME constants and relativeHit() are provided by game-logic.js (loaded before this script)
-
-class Ball{
-    constructor(){
-        this.width  = GAME.BALL_SIZE;
+class Ball {
+    constructor() {
+        this.width = GAME.BALL_SIZE;
         this.height = GAME.BALL_SIZE;
-        this.x = canvas.width/2  - this.width/2;
-        this.y = canvas.height/2 - this.height/2;
+        this.x = canvas.width / 2 - this.width / 2;
+        this.y = canvas.height / 2 - this.height / 2;
         this.velX = 0;
         this.velY = 0;
     }
 
-    move(){
+    move() {
         //bounce off the top and bottom walls
-        if(this.y < GAME.WALL_MARGIN || this.y > canvas.height - GAME.BALL_SIZE - GAME.WALL_MARGIN){
+        if (this.y < GAME.WALL_MARGIN || this.y > canvas.height - GAME.BALL_SIZE - GAME.WALL_MARGIN) {
             this.velY *= (-1);
         }
         this.x += this.velX;
@@ -20,28 +18,28 @@ class Ball{
     }
 }
 
-class Player{
-    constructor(side){
-        this.side   = side;
-        this.width  = GAME.PADDLE_WIDTH;
+class Player {
+    constructor(side) {
+        this.side = side;
+        this.width = GAME.PADDLE_WIDTH;
         this.height = GAME.PADDLE_HEIGHT;
-        if(side === 'left'){
+        if (side === 'left') {
             this.x = GAME.PADDLE_OFFSET;
         }
-        else if(side === 'right'){
+        else if (side === 'right') {
             this.x = canvas.width - GAME.PADDLE_OFFSET - this.width;
         }
-        else{
+        else {
             console.error("choose playing side, either 'left' or 'right'");
         }
-        this.y = canvas.height/2 - this.height/2;
+        this.y = canvas.height / 2 - this.height / 2;
     }
 
-    move(delta_y){
-        if(this.y < GAME.WALL_MARGIN && delta_y < 0){
+    move(delta_y) {
+        if (this.y < GAME.WALL_MARGIN && delta_y < 0) {
             return;
         }
-        if(this.y > (canvas.height - this.height) && delta_y > 0){
+        if (this.y > (canvas.height - this.height) && delta_y > 0) {
             return;
         }
         this.y += delta_y;
@@ -51,28 +49,28 @@ class Player{
 //gameboard and coloring of moving objects
 let canvas = document.getElementById("gb");
 // Set explicit internal canvas dimensions (CSS scales these for display)
-canvas.width  = 300;
+canvas.width = 300;
 canvas.height = 150;
 const gameboard = canvas.getContext("2d");
 gameboard.fillStyle = "white";
 gameboard.font = '30px serif';
 
 //scoring
-let leftScoreNode  = document.getElementById("leftScore");
+let leftScoreNode = document.getElementById("leftScore");
 let rightScoreNode = document.getElementById("rightScore");
-let leftScore  = 0;
+let leftScore = 0;
 let rightScore = 0;
 
 //create moving objects
-let ball        = new Ball();
-let leftPlayer  = new Player('left');
+let ball = new Ball();
+let leftPlayer = new Player('left');
 let rightPlayer = new Player('right');
 
 //update canvas
-function createFrame(){
+function createFrame() {
     gameboard.clearRect(0, 0, canvas.width, canvas.height);
-    gameboard.fillRect(ball.x,        ball.y,        ball.width,        ball.height);
-    gameboard.fillRect(leftPlayer.x,  leftPlayer.y,  leftPlayer.width,  leftPlayer.height);
+    gameboard.fillRect(ball.x, ball.y, ball.width, ball.height);
+    gameboard.fillRect(leftPlayer.x, leftPlayer.y, leftPlayer.width, leftPlayer.height);
     gameboard.fillRect(rightPlayer.x, rightPlayer.y, rightPlayer.width, rightPlayer.height);
 }
 
@@ -82,7 +80,7 @@ let isArrowUpPressed = false, isArrowDownPressed = false, isWPressed = false, is
 //AI mode toggle
 let aiEnabled = false;
 const aiToggleBtn = document.getElementById("aiToggle");
-aiToggleBtn.addEventListener('click', function() {
+aiToggleBtn.addEventListener('click', function () {
     aiEnabled = !aiEnabled;
     aiToggleBtn.textContent = aiEnabled ? 'AI: ON' : 'AI: OFF';
 });
@@ -91,31 +89,31 @@ gameboard.fillText("Click to play", 65, 80);
 let playing;
 
 //determining if key is pressed
-document.addEventListener('keydown', function(event){
+document.addEventListener('keydown', function (event) {
     let key = event.key;
-    switch(key){
-        case 'ArrowUp':   isArrowUpPressed   = true;  break;
-        case 'ArrowDown': isArrowDownPressed = true;  break;
-        case 'w':         isWPressed         = true;  break;
-        case 's':         isSPressed         = true;  break;
+    switch (key) {
+        case 'ArrowUp': isArrowUpPressed = true; break;
+        case 'ArrowDown': isArrowDownPressed = true; break;
+        case 'w': isWPressed = true; break;
+        case 's': isSPressed = true; break;
     }
 });
-document.addEventListener('keyup', function(event){
+document.addEventListener('keyup', function (event) {
     let key = event.key;
-    switch(key){
-        case 'ArrowUp':   isArrowUpPressed   = false; break;
+    switch (key) {
+        case 'ArrowUp': isArrowUpPressed = false; break;
         case 'ArrowDown': isArrowDownPressed = false; break;
-        case 'w':         isWPressed         = false; break;
-        case 's':         isSPressed         = false; break;
+        case 'w': isWPressed = false; break;
+        case 's': isSPressed = false; break;
     }
 });
 
 
 //determines the vector of velocity for ball if it hits left player
 function reflectLeft() {
-    if(GAME.PADDLE_OFFSET <= ball.x && ball.x <= GAME.PADDLE_OFFSET + leftPlayer.width){
+    if (GAME.PADDLE_OFFSET <= ball.x && ball.x <= GAME.PADDLE_OFFSET + leftPlayer.width) {
         let relativeBallPosition = ball.y - leftPlayer.y;
-        if(0 <= relativeBallPosition && relativeBallPosition <= leftPlayer.height){
+        if (0 <= relativeBallPosition && relativeBallPosition <= leftPlayer.height) {
             ball.velX *= (-1);
             ball.velY += relativeHit(relativeBallPosition);
             ball.velY = Math.max(-GAME.MAX_BALL_SPEED_Y, Math.min(GAME.MAX_BALL_SPEED_Y, ball.velY));
@@ -125,9 +123,9 @@ function reflectLeft() {
 
 //determines the vector of velocity for ball if it hits right player
 function reflectRight() {
-    if(canvas.width - GAME.PADDLE_OFFSET - rightPlayer.width <= ball.x && ball.x <= canvas.width - GAME.PADDLE_OFFSET){
+    if (canvas.width - GAME.PADDLE_OFFSET - rightPlayer.width <= ball.x && ball.x <= canvas.width - GAME.PADDLE_OFFSET) {
         let relativeBallPosition = ball.y - rightPlayer.y;
-        if(0 <= relativeBallPosition && relativeBallPosition <= rightPlayer.height){
+        if (0 <= relativeBallPosition && relativeBallPosition <= rightPlayer.height) {
             ball.velX *= (-1);
             ball.velY += relativeHit(relativeBallPosition);
             ball.velY = Math.max(-GAME.MAX_BALL_SPEED_Y, Math.min(GAME.MAX_BALL_SPEED_Y, ball.velY));
@@ -137,11 +135,11 @@ function reflectRight() {
 
 //determines if someone scored
 function checkIfBallOutOfBounds() {
-    if(ball.x < 0){
+    if (ball.x < 0) {
         incrementScore(rightPlayer);
         newRound();
     }
-    else if(canvas.width < ball.x){
+    else if (canvas.width < ball.x) {
         incrementScore(leftPlayer);
         newRound();
     }
@@ -149,27 +147,27 @@ function checkIfBallOutOfBounds() {
 
 //game reset — alternates serve direction each round
 function newRound() {
-    ball.x    = canvas.width/2  - ball.width/2;
-    ball.y    = canvas.height/2 - ball.height/2;
+    ball.x = canvas.width / 2 - ball.width / 2;
+    ball.y = canvas.height / 2 - ball.height / 2;
     ball.velX = ball.velX > 0 ? -GAME.BALL_SPEED_X : GAME.BALL_SPEED_X;
     ball.velY = Math.random() - 0.5;
-    leftPlayer.y  = canvas.height/2 - leftPlayer.height/2;
-    rightPlayer.y = canvas.height/2 - rightPlayer.height/2;
+    leftPlayer.y = canvas.height / 2 - leftPlayer.height / 2;
+    rightPlayer.y = canvas.height / 2 - rightPlayer.height / 2;
 }
 
 //increment score
 function incrementScore(player) {
-    if(player.side === 'left'){
+    if (player.side === 'left') {
         leftScore++;
         leftScoreNode.innerHTML = leftScore.toString();
-        if(leftScore >= GAME.WIN_SCORE){
+        if (leftScore >= GAME.WIN_SCORE) {
             resetScore();
         }
     }
-    else if(player.side === 'right'){
+    else if (player.side === 'right') {
         rightScore++;
         rightScoreNode.innerHTML = rightScore.toString();
-        if(rightScore >= GAME.WIN_SCORE){
+        if (rightScore >= GAME.WIN_SCORE) {
             resetScore();
         }
     }
@@ -179,9 +177,9 @@ let mainRoutine;
 //resets score -- end of game
 function resetScore() {
     rightScore = 0;
-    leftScore  = 0;
+    leftScore = 0;
     rightScoreNode.innerHTML = rightScore.toString();
-    leftScoreNode.innerHTML  = leftScore.toString();
+    leftScoreNode.innerHTML = leftScore.toString();
     clearInterval(mainRoutine);
     gameboard.fillText("Click to play", 65, 80);
     playing = false;
@@ -194,7 +192,7 @@ ball.velY = Math.random() - 0.5;
 // Move the AI paddle to track the ball at a capped speed (keeps it beatable)
 function moveAiPaddle() {
     const paddleCenter = rightPlayer.y + rightPlayer.height / 2;
-    const ballCenter   = ball.y + ball.height / 2;
+    const ballCenter = ball.y + ball.height / 2;
     const diff = ballCenter - paddleCenter;
     const step = Math.min(Math.abs(diff), GAME.AI_MAX_SPEED);
     rightPlayer.move(diff > 0 ? step : -step);
@@ -202,22 +200,22 @@ function moveAiPaddle() {
 
 function gameplay() {
     //user input movement
-    if(aiEnabled){
+    if (aiEnabled) {
         moveAiPaddle();
     } else {
-        if(isArrowDownPressed){ rightPlayer.move( GAME.PADDLE_SPEED); }
-        if(isArrowUpPressed)  { rightPlayer.move(-GAME.PADDLE_SPEED); }
+        if (isArrowDownPressed) { rightPlayer.move(GAME.PADDLE_SPEED); }
+        if (isArrowUpPressed) { rightPlayer.move(-GAME.PADDLE_SPEED); }
     }
-    if(isSPressed){ leftPlayer.move(  GAME.PADDLE_SPEED); }
-    if(isWPressed){ leftPlayer.move( -GAME.PADDLE_SPEED); }
+    if (isSPressed) { leftPlayer.move(GAME.PADDLE_SPEED); }
+    if (isWPressed) { leftPlayer.move(-GAME.PADDLE_SPEED); }
 
     ball.move();
 
     //determine if any player reflects the ball
-    if(ball.velX < 0){
+    if (ball.velX < 0) {
         reflectLeft();
     }
-    else{
+    else {
         reflectRight();
     }
 
@@ -229,11 +227,11 @@ function gameplay() {
 }
 
 //gives the user ability to start and stop the game
-canvas.addEventListener('click', function() {
-    if(!playing){
+canvas.addEventListener('click', function () {
+    if (!playing) {
         mainRoutine = setInterval(gameplay, 10);
     }
-    else{
+    else {
         clearInterval(mainRoutine);
     }
     playing = !playing;

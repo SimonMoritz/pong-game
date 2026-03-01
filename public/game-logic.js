@@ -3,15 +3,15 @@
 // and imported as a CommonJS module in the Node.js test runner.
 
 const GAME = {
-    BALL_SIZE:     4,
-    PADDLE_WIDTH:  5,
+    BALL_SIZE: 4,
+    PADDLE_WIDTH: 5,
     PADDLE_HEIGHT: 26,
     PADDLE_OFFSET: 20,   // horizontal distance of each paddle from the canvas edge
-    PADDLE_SPEED:  2,
-    BALL_SPEED_X:  1.5,
-    WIN_SCORE:     10,
-    WALL_MARGIN:   1,
-    AI_MAX_SPEED:    1.6,  // AI paddle speed — lower than PADDLE_SPEED so humans can win
+    PADDLE_SPEED: 2,
+    BALL_SPEED_X: 1.5,
+    WIN_SCORE: 10,
+    WALL_MARGIN: 1,
+    AI_MAX_SPEED: 1.6,  // AI paddle speed — lower than PADDLE_SPEED so humans can win
     MAX_BALL_SPEED_Y: 3,   // prevents velY from growing unbounded after repeated paddle hits
 };
 

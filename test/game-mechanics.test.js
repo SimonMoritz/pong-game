@@ -14,10 +14,10 @@ const CANVAS = { width: 300, height: 150 };
 // Mirror of the Ball class from main.js
 class Ball {
     constructor() {
-        this.width  = GAME.BALL_SIZE;
+        this.width = GAME.BALL_SIZE;
         this.height = GAME.BALL_SIZE;
-        this.x = CANVAS.width/2  - this.width/2;
-        this.y = CANVAS.height/2 - this.height/2;
+        this.x = CANVAS.width / 2 - this.width / 2;
+        this.y = CANVAS.height / 2 - this.height / 2;
         this.velX = 0;
         this.velY = 0;
     }
@@ -33,13 +33,13 @@ class Ball {
 // Mirror of the Player class from main.js
 class Player {
     constructor(side) {
-        this.side   = side;
-        this.width  = GAME.PADDLE_WIDTH;
+        this.side = side;
+        this.width = GAME.PADDLE_WIDTH;
         this.height = GAME.PADDLE_HEIGHT;
         this.x = side === 'left'
             ? GAME.PADDLE_OFFSET
             : CANVAS.width - GAME.PADDLE_OFFSET - this.width;
-        this.y = CANVAS.height/2 - this.height/2;
+        this.y = CANVAS.height / 2 - this.height / 2;
     }
     move(delta_y) {
         if (this.y < GAME.WALL_MARGIN && delta_y < 0) return;
@@ -63,7 +63,7 @@ test('ball moves by its velocity each frame', () => {
 
 test('ball bounces off top wall (velY flips from negative to positive)', () => {
     const ball = new Ball();
-    ball.y    = 0; // at top wall
+    ball.y = 0; // at top wall
     ball.velY = -1;
     ball.move();
     assert.ok(ball.velY > 0, `velY should be positive after top-wall bounce, got ${ball.velY}`);
@@ -72,7 +72,7 @@ test('ball bounces off top wall (velY flips from negative to positive)', () => {
 test('ball bounces off bottom wall (velY flips from positive to negative)', () => {
     const ball = new Ball();
     // condition is y > threshold (strict), so place ball one pixel past it
-    ball.y    = CANVAS.height - GAME.BALL_SIZE - GAME.WALL_MARGIN + 1;
+    ball.y = CANVAS.height - GAME.BALL_SIZE - GAME.WALL_MARGIN + 1;
     ball.velY = 1;
     ball.move();
     assert.ok(ball.velY < 0, `velY should be negative after bottom-wall bounce, got ${ball.velY}`);
@@ -166,10 +166,10 @@ test('newRound centers the ball', () => {
     const ball = new Ball();
     ball.x = 0; ball.y = 0; ball.velX = GAME.BALL_SPEED_X;
     // simulate newRound
-    ball.x = CANVAS.width/2  - ball.width/2;
-    ball.y = CANVAS.height/2 - ball.height/2;
-    assert.equal(ball.x, CANVAS.width/2  - GAME.BALL_SIZE/2);
-    assert.equal(ball.y, CANVAS.height/2 - GAME.BALL_SIZE/2);
+    ball.x = CANVAS.width / 2 - ball.width / 2;
+    ball.y = CANVAS.height / 2 - ball.height / 2;
+    assert.equal(ball.x, CANVAS.width / 2 - GAME.BALL_SIZE / 2);
+    assert.equal(ball.y, CANVAS.height / 2 - GAME.BALL_SIZE / 2);
 });
 
 test('newRound reverses serve direction', () => {
