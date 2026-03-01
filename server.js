@@ -1,29 +1,25 @@
-const http = require('http');
-const https = require('https')
 const fs = require('fs');
-const hostname = '178.128.255.58';
-const hostname2 = '0.0.0.0'; // docker container
+const https = require('https');
 const nStatic = require('node-static');
 const fileServer = new nStatic.Server('./public');
-const port = 443;
+const port = process.env.PORT || 443;
+const host = process.env.HOST || '0.0.0.0';
 
-const options = {
-	key: fs.readFileSync('privkey.pem'),
-	cert: fs.readFileSync('fullchain.pem'),
+let options;
+try {
+    options = {
+        key: fs.readFileSync('privkey.pem'),
+        cert: fs.readFileSync('fullchain.pem'),
+    };
+} catch (err) {
+    console.error('Failed to load SSL certificates. Ensure privkey.pem and fullchain.pem exist.', err.message);
+    process.exit(1);
 }
 
 let server = https.createServer(options, function (req, res) {
-  fileServer.serve(req, res)
-  if (req == '/'){
-    fs.readFile('index.html', function(err, data) {
-      res.writeHead(200, {'Content-Type': 'text/html'});
-      res.write(data);
-      return res.end();
-    });
-  }
-})
+    fileServer.serve(req, res);
+});
 
-
-server.listen(port, hostname2, () => {
-  console.log(`Server running at http://${hostname2}:${port}/`);
+server.listen(port, host, () => {
+    console.log(`Server running at https://${host}:${port}/`);
 });

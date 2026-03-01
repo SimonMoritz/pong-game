@@ -4,14 +4,14 @@ FROM node:22
 # The /app directory should act as the main application directory
 WORKDIR /app
 
-# Copy the app package and package-lock.json file
-#COPY package*.json ./
-
-# Copy local directories to the current local directory of our docker image (/app)
-COPY . .
+# Copy package manifest first for better layer caching
+COPY package*.json ./
 
 RUN npm install
 
+# Copy application source
+COPY . .
+
 EXPOSE 443
 
-CMD node server.js
+CMD npm start
