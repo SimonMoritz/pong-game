@@ -37,7 +37,52 @@ function relativeHit(position) {
     return 0;
 }
 
+class Ball {
+    constructor(canvas) {
+        this.canvasWidth = canvas.width;
+        this.canvasHeight = canvas.height;
+        this.width = GAME.BALL_SIZE;
+        this.height = GAME.BALL_SIZE;
+        this.x = canvas.width / 2 - this.width / 2;
+        this.y = canvas.height / 2 - this.height / 2;
+        this.velX = 0;
+        this.velY = 0;
+    }
+
+    move() {
+        if (this.y < GAME.WALL_MARGIN || this.y > this.canvasHeight - GAME.BALL_SIZE - GAME.WALL_MARGIN) {
+            this.velY *= -1;
+        }
+        this.x += this.velX;
+        this.y += this.velY;
+    }
+}
+
+class Player {
+    constructor(side, canvas) {
+        this.canvasWidth = canvas.width;
+        this.canvasHeight = canvas.height;
+        this.side = side;
+        this.width = GAME.PADDLE_WIDTH;
+        this.height = GAME.PADDLE_HEIGHT;
+        if (side === 'left') {
+            this.x = GAME.PADDLE_OFFSET;
+        } else if (side === 'right') {
+            this.x = canvas.width - GAME.PADDLE_OFFSET - this.width;
+        } else {
+            console.error("choose playing side, either 'left' or 'right'");
+        }
+        this.y = canvas.height / 2 - this.height / 2;
+    }
+
+    move(delta_y) {
+        if (this.y < GAME.WALL_MARGIN && delta_y < 0) return;
+        if (this.y > (this.canvasHeight - this.height) && delta_y > 0) return;
+        this.y += delta_y;
+    }
+}
+
 // Export for Node.js test runner; in the browser these become globals via <script>
 if (typeof module !== 'undefined') {
-    module.exports = { GAME, relativeHit };
+    module.exports = { GAME, relativeHit, Ball, Player };
 }

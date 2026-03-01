@@ -1,51 +1,3 @@
-class Ball {
-    constructor() {
-        this.width = GAME.BALL_SIZE;
-        this.height = GAME.BALL_SIZE;
-        this.x = canvas.width / 2 - this.width / 2;
-        this.y = canvas.height / 2 - this.height / 2;
-        this.velX = 0;
-        this.velY = 0;
-    }
-
-    move() {
-        //bounce off the top and bottom walls
-        if (this.y < GAME.WALL_MARGIN || this.y > canvas.height - GAME.BALL_SIZE - GAME.WALL_MARGIN) {
-            this.velY *= (-1);
-        }
-        this.x += this.velX;
-        this.y += this.velY;
-    }
-}
-
-class Player {
-    constructor(side) {
-        this.side = side;
-        this.width = GAME.PADDLE_WIDTH;
-        this.height = GAME.PADDLE_HEIGHT;
-        if (side === 'left') {
-            this.x = GAME.PADDLE_OFFSET;
-        }
-        else if (side === 'right') {
-            this.x = canvas.width - GAME.PADDLE_OFFSET - this.width;
-        }
-        else {
-            console.error("choose playing side, either 'left' or 'right'");
-        }
-        this.y = canvas.height / 2 - this.height / 2;
-    }
-
-    move(delta_y) {
-        if (this.y < GAME.WALL_MARGIN && delta_y < 0) {
-            return;
-        }
-        if (this.y > (canvas.height - this.height) && delta_y > 0) {
-            return;
-        }
-        this.y += delta_y;
-    }
-}
-
 //gameboard and coloring of moving objects
 let canvas = document.getElementById("gb");
 // Set explicit internal canvas dimensions (CSS scales these for display)
@@ -62,9 +14,9 @@ let leftScore = 0;
 let rightScore = 0;
 
 //create moving objects
-let ball = new Ball();
-let leftPlayer = new Player('left');
-let rightPlayer = new Player('right');
+let ball = new Ball(canvas);
+let leftPlayer = new Player('left', canvas);
+let rightPlayer = new Player('right', canvas);
 
 //update canvas
 function createFrame() {
