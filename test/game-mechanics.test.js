@@ -1,9 +1,9 @@
 // Tests for game mechanics: ball movement, player boundaries, speed cap,
 // scoring detection, and round reset.
 
-const { test } = require('node:test');
-const assert = require('node:assert/strict');
-const { GAME, relativeHit, Ball, Player } = require('../public/game-logic.js');
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { GAME, relativeHit, Ball, Player } from '../public/game-logic.js';
 
 const CANVAS = { width: 300, height: 150 };
 
