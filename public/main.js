@@ -1,192 +1,162 @@
-import { GAME, relativeHit, Ball, Player } from './game-logic.js';
+import { GAME, scaledConfig, relativeHit, Ball, Player } from './game-logic.js';
+import { createRenderer } from './renderer.js';
+import { createInputHandler } from './input.js';
 
-//gameboard and coloring of moving objects
-let canvas = document.getElementById("gb");
-// Set explicit internal canvas dimensions (CSS scales these for display)
-canvas.width = 300;
-canvas.height = 150;
-const gameboard = canvas.getContext("2d");
-gameboard.fillStyle = "white";
-gameboard.font = '30px serif';
+const canvas = document.getElementById('gb');
+const keys = createInputHandler();
 
-//scoring
-let leftScoreNode = document.getElementById("leftScore");
-let rightScoreNode = document.getElementById("rightScore");
-let leftScore = 0;
-let rightScore = 0;
-
-//create moving objects
-let ball = new Ball(canvas);
-let leftPlayer = new Player('left', canvas);
-let rightPlayer = new Player('right', canvas);
-
-//update canvas
-function createFrame() {
-    gameboard.clearRect(0, 0, canvas.width, canvas.height);
-    gameboard.fillRect(ball.x, ball.y, ball.width, ball.height);
-    gameboard.fillRect(leftPlayer.x, leftPlayer.y, leftPlayer.width, leftPlayer.height);
-    gameboard.fillRect(rightPlayer.x, rightPlayer.y, rightPlayer.width, rightPlayer.height);
-}
-
-//variables for key press
-let isArrowUpPressed = false, isArrowDownPressed = false, isWPressed = false, isSPressed = false;
-
-//AI mode toggle
+// Game state
+let config, ball, leftPlayer, rightPlayer, renderer;
+let leftScore = 0, rightScore = 0;
+let playing = false;
+let mainRoutine = null;
 let aiEnabled = false;
-const aiToggleBtn = document.getElementById("aiToggle");
-aiToggleBtn.addEventListener('click', function () {
-    aiEnabled = !aiEnabled;
-    aiToggleBtn.textContent = aiEnabled ? 'AI: ON' : 'AI: OFF';
-});
 
-gameboard.fillText("Click to play", 65, 80);
-let playing;
+// --- Initialisation ---
 
-//determining if key is pressed
-document.addEventListener('keydown', function (event) {
-    let key = event.key;
-    switch (key) {
-        case 'ArrowUp': isArrowUpPressed = true; break;
-        case 'ArrowDown': isArrowDownPressed = true; break;
-        case 'w': isWPressed = true; break;
-        case 's': isSPressed = true; break;
+function initGame() {
+    config = scaledConfig(canvas);
+    ball = new Ball(canvas, config);
+    leftPlayer = new Player('left', canvas, config);
+    rightPlayer = new Player('right', canvas, config);
+    renderer = createRenderer(canvas);
+    ball.velX = config.BALL_SPEED_X;
+    ball.velY = (Math.random() - 0.5) * config.BALL_SPEED_X;
+}
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    if (playing) {
+        clearInterval(mainRoutine);
+        playing = false;
     }
-});
-document.addEventListener('keyup', function (event) {
-    let key = event.key;
-    switch (key) {
-        case 'ArrowUp': isArrowUpPressed = false; break;
-        case 'ArrowDown': isArrowDownPressed = false; break;
-        case 'w': isWPressed = false; break;
-        case 's': isSPressed = false; break;
+    initGame();
+    renderer.drawPrompt('Click to play');
+}
+
+// --- Game loop ---
+
+function startGame() {
+    playing = true;
+    mainRoutine = setInterval(gameplay, 10);
+}
+
+function gameplay() {
+    if (aiEnabled) {
+        moveAiPaddle();
+    } else {
+        if (keys.arrowDown) rightPlayer.move(config.PADDLE_SPEED);
+        if (keys.arrowUp)   rightPlayer.move(-config.PADDLE_SPEED);
     }
-});
+    if (keys.s) leftPlayer.move(config.PADDLE_SPEED);
+    if (keys.w) leftPlayer.move(-config.PADDLE_SPEED);
 
+    ball.move();
 
-//determines the vector of velocity for ball if it hits left player
+    if (ball.velX < 0) {
+        reflectLeft();
+    } else {
+        reflectRight();
+    }
+
+    checkIfBallOutOfBounds();
+    renderer.drawFrame(ball, leftPlayer, rightPlayer);
+}
+
+// --- AI ---
+
+function moveAiPaddle() {
+    const paddleCenter = rightPlayer.y + rightPlayer.height / 2;
+    const ballCenter = ball.y + ball.height / 2;
+    const diff = ballCenter - paddleCenter;
+    const step = Math.min(Math.abs(diff), config.AI_MAX_SPEED);
+    rightPlayer.move(diff > 0 ? step : -step);
+}
+
+// --- Ball reflection ---
+
 function reflectLeft() {
-    if (GAME.PADDLE_OFFSET <= ball.x && ball.x <= GAME.PADDLE_OFFSET + leftPlayer.width) {
-        let relativeBallPosition = ball.y - leftPlayer.y;
+    if (config.PADDLE_OFFSET <= ball.x && ball.x <= config.PADDLE_OFFSET + leftPlayer.width) {
+        const relativeBallPosition = ball.y - leftPlayer.y;
         if (0 <= relativeBallPosition && relativeBallPosition <= leftPlayer.height) {
-            ball.velX *= (-1);
-            ball.velY += relativeHit(relativeBallPosition);
-            ball.velY = Math.max(-GAME.MAX_BALL_SPEED_Y, Math.min(GAME.MAX_BALL_SPEED_Y, ball.velY));
+            ball.velX *= -1;
+            ball.velY += relativeHit(relativeBallPosition, config);
+            ball.velY = Math.max(-config.MAX_BALL_SPEED_Y, Math.min(config.MAX_BALL_SPEED_Y, ball.velY));
         }
     }
 }
 
-//determines the vector of velocity for ball if it hits right player
 function reflectRight() {
-    if (canvas.width - GAME.PADDLE_OFFSET - rightPlayer.width <= ball.x && ball.x <= canvas.width - GAME.PADDLE_OFFSET) {
-        let relativeBallPosition = ball.y - rightPlayer.y;
+    const rightEdge = canvas.width - config.PADDLE_OFFSET - rightPlayer.width;
+    if (rightEdge <= ball.x && ball.x <= canvas.width - config.PADDLE_OFFSET) {
+        const relativeBallPosition = ball.y - rightPlayer.y;
         if (0 <= relativeBallPosition && relativeBallPosition <= rightPlayer.height) {
-            ball.velX *= (-1);
-            ball.velY += relativeHit(relativeBallPosition);
-            ball.velY = Math.max(-GAME.MAX_BALL_SPEED_Y, Math.min(GAME.MAX_BALL_SPEED_Y, ball.velY));
+            ball.velX *= -1;
+            ball.velY += relativeHit(relativeBallPosition, config);
+            ball.velY = Math.max(-config.MAX_BALL_SPEED_Y, Math.min(config.MAX_BALL_SPEED_Y, ball.velY));
         }
     }
 }
 
-//determines if someone scored
+// --- Scoring ---
+
+function newRound() {
+    ball.x = canvas.width / 2 - ball.width / 2;
+    ball.y = canvas.height / 2 - ball.height / 2;
+    ball.velX = ball.velX > 0 ? -config.BALL_SPEED_X : config.BALL_SPEED_X;
+    ball.velY = (Math.random() - 0.5) * config.BALL_SPEED_X;
+    leftPlayer.y = canvas.height / 2 - leftPlayer.height / 2;
+    rightPlayer.y = canvas.height / 2 - rightPlayer.height / 2;
+}
+
 function checkIfBallOutOfBounds() {
     if (ball.x < 0) {
         incrementScore(rightPlayer);
         newRound();
-    }
-    else if (canvas.width < ball.x) {
+    } else if (canvas.width < ball.x) {
         incrementScore(leftPlayer);
         newRound();
     }
 }
 
-//game reset — alternates serve direction each round
-function newRound() {
-    ball.x = canvas.width / 2 - ball.width / 2;
-    ball.y = canvas.height / 2 - ball.height / 2;
-    ball.velX = ball.velX > 0 ? -GAME.BALL_SPEED_X : GAME.BALL_SPEED_X;
-    ball.velY = Math.random() - 0.5;
-    leftPlayer.y = canvas.height / 2 - leftPlayer.height / 2;
-    rightPlayer.y = canvas.height / 2 - rightPlayer.height / 2;
-}
-
-//increment score
 function incrementScore(player) {
     if (player.side === 'left') {
         leftScore++;
-        leftScoreNode.innerHTML = leftScore.toString();
-        if (leftScore >= GAME.WIN_SCORE) {
-            resetScore();
-        }
-    }
-    else if (player.side === 'right') {
+        document.getElementById('leftScore').textContent = leftScore;
+        if (leftScore >= GAME.WIN_SCORE) resetScore();
+    } else {
         rightScore++;
-        rightScoreNode.innerHTML = rightScore.toString();
-        if (rightScore >= GAME.WIN_SCORE) {
-            resetScore();
-        }
+        document.getElementById('rightScore').textContent = rightScore;
+        if (rightScore >= GAME.WIN_SCORE) resetScore();
     }
 }
 
-let mainRoutine;
-//resets score -- end of game
 function resetScore() {
-    rightScore = 0;
     leftScore = 0;
-    rightScoreNode.innerHTML = rightScore.toString();
-    leftScoreNode.innerHTML = leftScore.toString();
+    rightScore = 0;
+    document.getElementById('leftScore').textContent = '0';
+    document.getElementById('rightScore').textContent = '0';
     clearInterval(mainRoutine);
-    gameboard.fillText("Click to play", 65, 80);
+    renderer.drawPrompt('Click to play');
     playing = false;
 }
 
-//starting velocity ball
-ball.velX = GAME.BALL_SPEED_X;
-ball.velY = Math.random() - 0.5;
+// --- Event wiring ---
 
-// Move the AI paddle to track the ball at a capped speed (keeps it beatable)
-function moveAiPaddle() {
-    const paddleCenter = rightPlayer.y + rightPlayer.height / 2;
-    const ballCenter = ball.y + ball.height / 2;
-    const diff = ballCenter - paddleCenter;
-    const step = Math.min(Math.abs(diff), GAME.AI_MAX_SPEED);
-    rightPlayer.move(diff > 0 ? step : -step);
-}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
-function gameplay() {
-    //user input movement
-    if (aiEnabled) {
-        moveAiPaddle();
-    } else {
-        if (isArrowDownPressed) { rightPlayer.move(GAME.PADDLE_SPEED); }
-        if (isArrowUpPressed) { rightPlayer.move(-GAME.PADDLE_SPEED); }
-    }
-    if (isSPressed) { leftPlayer.move(GAME.PADDLE_SPEED); }
-    if (isWPressed) { leftPlayer.move(-GAME.PADDLE_SPEED); }
+document.getElementById('aiToggle').addEventListener('click', () => {
+    aiEnabled = !aiEnabled;
+    document.getElementById('aiToggle').textContent = aiEnabled ? 'AI: ON' : 'AI: OFF';
+});
 
-    ball.move();
-
-    //determine if any player reflects the ball
-    if (ball.velX < 0) {
-        reflectLeft();
-    }
-    else {
-        reflectRight();
-    }
-
-    //determine if one player has scored
-    checkIfBallOutOfBounds();
-
-    //create new drawings
-    createFrame();
-}
-
-//gives the user ability to start and stop the game
-canvas.addEventListener('click', function () {
+canvas.addEventListener('click', () => {
     if (!playing) {
-        mainRoutine = setInterval(gameplay, 10);
-    }
-    else {
+        startGame();
+    } else {
         clearInterval(mainRoutine);
+        playing = false;
     }
-    playing = !playing;
 });
