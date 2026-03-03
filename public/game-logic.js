@@ -1,6 +1,4 @@
 // Pure game-logic constants and functions — no browser dependencies.
-// Loaded as a plain script in the browser (adds to global scope),
-// and imported as a CommonJS module in the Node.js test runner.
 
 const GAME = {
     BALL_SIZE: 4,
@@ -82,7 +80,4 @@ class Player {
     }
 }
 
-// Export for Node.js test runner; in the browser these become globals via <script>
-if (typeof module !== 'undefined') {
-    module.exports = { GAME, relativeHit, Ball, Player };
-}
+export { GAME, relativeHit, Ball, Player };

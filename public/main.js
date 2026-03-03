@@ -1,3 +1,5 @@
+import { GAME, relativeHit, Ball, Player } from './game-logic.js';
+
 //gameboard and coloring of moving objects
 let canvas = document.getElementById("gb");
 // Set explicit internal canvas dimensions (CSS scales these for display)
