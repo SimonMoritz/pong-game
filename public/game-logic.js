@@ -46,14 +46,13 @@ function scaledConfig(canvas) {
 function relativeHit(position, config = GAME) {
     const halfHeight = config.PADDLE_HEIGHT / 2;
     let deltaVelY;
-
     if (position < halfHeight) {
-        deltaVelY = Math.min(1, 1 / position);
+        deltaVelY = Math.min(1, Math.log(halfHeight / position));
         return -deltaVelY;
     }
     if (position > halfHeight + 1) {
         const newPos = Math.abs(position - config.PADDLE_HEIGHT);
-        deltaVelY = Math.min(1, 1 / newPos);
+        deltaVelY = Math.min(1, Math.log(halfHeight / newPos));
         return deltaVelY;
     }
     return 0;
