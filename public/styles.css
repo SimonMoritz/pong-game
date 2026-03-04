@@ -31,7 +31,8 @@ canvas#gb {
     align-items: center;
     gap: 10px;
     padding: 16px;
-    pointer-events: none;   /* clicks pass through to canvas */
+    pointer-events: none;
+    /* clicks pass through to canvas */
 }
 
 .scoreboard {
@@ -50,7 +51,8 @@ canvas#gb {
 }
 
 .controls {
-    pointer-events: all;    /* re-enable clicks for the button */
+    pointer-events: all;
+    /* re-enable clicks for the button */
 }
 
 #aiToggle {

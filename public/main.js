@@ -10,7 +10,7 @@ let config, ball, leftPlayer, rightPlayer, renderer;
 let leftScore = 0, rightScore = 0;
 let playing = false;
 let mainRoutine = null;
-let aiEnabled = false;
+let aiEnabled = true;
 
 // --- Initialisation ---
 
@@ -47,7 +47,7 @@ function gameplay() {
         moveAiPaddle();
     } else {
         if (keys.arrowDown) rightPlayer.move(config.PADDLE_SPEED);
-        if (keys.arrowUp)   rightPlayer.move(-config.PADDLE_SPEED);
+        if (keys.arrowUp) rightPlayer.move(-config.PADDLE_SPEED);
     }
     if (keys.s) leftPlayer.move(config.PADDLE_SPEED);
     if (keys.w) leftPlayer.move(-config.PADDLE_SPEED);
@@ -75,7 +75,6 @@ function moveAiPaddle() {
 }
 
 // --- Ball reflection ---
-
 function reflectLeft() {
     if (config.PADDLE_OFFSET <= ball.x && ball.x <= config.PADDLE_OFFSET + leftPlayer.width) {
         const relativeBallPosition = ball.y - leftPlayer.y;
@@ -100,7 +99,6 @@ function reflectRight() {
 }
 
 // --- Scoring ---
-
 function newRound() {
     ball.x = canvas.width / 2 - ball.width / 2;
     ball.y = canvas.height / 2 - ball.height / 2;
@@ -143,7 +141,6 @@ function resetScore() {
 }
 
 // --- Event wiring ---
-
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
