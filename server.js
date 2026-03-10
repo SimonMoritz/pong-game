@@ -1,9 +1,13 @@
 const fs = require('fs');
 const https = require('https');
-const nStatic = require('node-static');
-const fileServer = new nStatic.Server('./public');
+const express = require('express');
+
+const app = express();
 const port = process.env.PORT || 443;
 const host = process.env.HOST || '0.0.0.0';
+
+// Serve static files from public/
+app.use(express.static('public'));
 
 let options;
 try {
@@ -16,9 +20,7 @@ try {
     process.exit(1);
 }
 
-let server = https.createServer(options, function (req, res) {
-    fileServer.serve(req, res);
-});
+const server = https.createServer(options, app);
 
 server.listen(port, host, () => {
     console.log(`Server running at https://${host}:${port}/`);
