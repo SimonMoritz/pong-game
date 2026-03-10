@@ -1,7 +1,7 @@
 // Canvas rendering module — all drawing is isolated here.
 
 export function createRenderer(canvas) {
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false });
 
     return {
         drawFrame(ball, leftPlayer, rightPlayer) {
