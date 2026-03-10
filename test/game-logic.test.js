@@ -11,6 +11,7 @@ test('GAME constants have expected values', () => {
     assert.equal(GAME.PADDLE_OFFSET, 20);
     assert.equal(GAME.PADDLE_SPEED, 200);       // pixels per second
     assert.equal(GAME.BALL_SPEED_X, 150);       // pixels per second
+    assert.equal(GAME.MAX_BALL_SPEED_X, 450);   // pixels per second
     assert.equal(GAME.WIN_SCORE, 10);
     assert.equal(GAME.WALL_MARGIN, 1);
     assert.equal(GAME.AI_MAX_SPEED, 160);       // pixels per second
