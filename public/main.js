@@ -9,7 +9,8 @@ const keys = createInputHandler();
 let config, ball, leftPlayer, rightPlayer, renderer;
 let leftScore = 0, rightScore = 0;
 let playing = false;
-let mainRoutine = null;
+let animationId = null;
+let lastTime = 0;
 let aiEnabled = true;
 
 // --- Initialisation ---
@@ -28,8 +29,7 @@ function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     if (playing) {
-        clearInterval(mainRoutine);
-        playing = false;
+        stopGame();
     }
     initGame();
     renderer.drawPrompt('Click to play');
@@ -39,20 +39,42 @@ function resizeCanvas() {
 
 function startGame() {
     playing = true;
-    mainRoutine = setInterval(gameplay, 10);
+    lastTime = performance.now();
+    animationId = requestAnimationFrame(gameLoop);
 }
 
-function gameplay() {
-    if (aiEnabled) {
-        moveAiPaddle();
-    } else {
-        if (keys.arrowDown) rightPlayer.move(config.PADDLE_SPEED);
-        if (keys.arrowUp) rightPlayer.move(-config.PADDLE_SPEED);
+function stopGame() {
+    if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
     }
-    if (keys.s) leftPlayer.move(config.PADDLE_SPEED);
-    if (keys.w) leftPlayer.move(-config.PADDLE_SPEED);
+    playing = false;
+}
 
-    ball.move();
+function gameLoop(currentTime) {
+    if (!playing) return;
+
+    const dt = (currentTime - lastTime) / 1000;  // convert ms to seconds
+    lastTime = currentTime;
+
+    // Cap dt to prevent spiral of death on tab switch
+    const cappedDt = Math.min(dt, 0.1);
+
+    gameplay(cappedDt);
+    animationId = requestAnimationFrame(gameLoop);
+}
+
+function gameplay(dt) {
+    if (aiEnabled) {
+        moveAiPaddle(dt);
+    } else {
+        if (keys.arrowDown) rightPlayer.move(config.PADDLE_SPEED, dt);
+        if (keys.arrowUp) rightPlayer.move(-config.PADDLE_SPEED, dt);
+    }
+    if (keys.s) leftPlayer.move(config.PADDLE_SPEED, dt);
+    if (keys.w) leftPlayer.move(-config.PADDLE_SPEED, dt);
+
+    ball.move(dt);
 
     if (ball.velX < 0) {
         reflectLeft();
@@ -66,12 +88,15 @@ function gameplay() {
 
 // --- AI ---
 
-function moveAiPaddle() {
+function moveAiPaddle(dt) {
     const paddleCenter = rightPlayer.y + rightPlayer.height / 2;
     const ballCenter = ball.y + ball.height / 2;
     const diff = ballCenter - paddleCenter;
-    const step = Math.min(Math.abs(diff), config.AI_MAX_SPEED);
-    rightPlayer.move(diff > 0 ? step : -step);
+    const maxMove = config.AI_MAX_SPEED * dt;
+    const step = Math.min(Math.abs(diff), maxMove);
+    // Convert step back to speed (px/s) for the move function
+    const speed = dt > 0 ? step / dt : 0;
+    rightPlayer.move(diff > 0 ? speed : -speed, dt);
 }
 
 // --- Ball reflection ---
@@ -80,7 +105,7 @@ function reflectLeft() {
         const relativeBallPosition = ball.y - leftPlayer.y;
         if (0 <= relativeBallPosition && relativeBallPosition <= leftPlayer.height) {
             ball.velX *= -1;
-            ball.velY += relativeHit(relativeBallPosition, config);
+            ball.velY += relativeHit(relativeBallPosition, config) * config.BALL_SPEED_X;
             ball.velY = Math.max(-config.MAX_BALL_SPEED_Y, Math.min(config.MAX_BALL_SPEED_Y, ball.velY));
         }
     }
@@ -92,7 +117,7 @@ function reflectRight() {
         const relativeBallPosition = ball.y - rightPlayer.y;
         if (0 <= relativeBallPosition && relativeBallPosition <= rightPlayer.height) {
             ball.velX *= -1;
-            ball.velY += relativeHit(relativeBallPosition, config);
+            ball.velY += relativeHit(relativeBallPosition, config) * config.BALL_SPEED_X;
             ball.velY = Math.max(-config.MAX_BALL_SPEED_Y, Math.min(config.MAX_BALL_SPEED_Y, ball.velY));
         }
     }
@@ -135,9 +160,8 @@ function resetScore() {
     rightScore = 0;
     document.getElementById('leftScore').textContent = '0';
     document.getElementById('rightScore').textContent = '0';
-    clearInterval(mainRoutine);
+    stopGame();
     renderer.drawPrompt('Click to play');
-    playing = false;
 }
 
 // --- Event wiring ---
@@ -153,7 +177,6 @@ canvas.addEventListener('click', () => {
     if (!playing) {
         startGame();
     } else {
-        clearInterval(mainRoutine);
-        playing = false;
+        stopGame();
     }
 });

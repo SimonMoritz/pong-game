@@ -1,16 +1,15 @@
 // Pure game-logic constants and functions — no browser dependencies.
-
 const GAME = {
     BALL_SIZE: 4,
     PADDLE_WIDTH: 5,
     PADDLE_HEIGHT: 26,
-    PADDLE_OFFSET: 20,   // horizontal distance of each paddle from the canvas edge
-    PADDLE_SPEED: 2,
-    BALL_SPEED_X: 1.5,
+    PADDLE_OFFSET: 20,       // horizontal distance of each paddle from the canvas edge
+    PADDLE_SPEED: 200,       // pixels per second
+    BALL_SPEED_X: 150,       // pixels per second
     WIN_SCORE: 10,
     WALL_MARGIN: 1,
-    AI_MAX_SPEED: 1.6,  // AI paddle speed — lower than PADDLE_SPEED so humans can win
-    MAX_BALL_SPEED_Y: 3,   // prevents velY from growing unbounded after repeated paddle hits
+    AI_MAX_SPEED: 160,       // pixels per second — lower than PADDLE_SPEED so humans can win
+    MAX_BALL_SPEED_Y: 300,    // pixels per second — prevents velY from growing unbounded
 };
 
 // Reference canvas dimensions that GAME constants are calibrated for.
@@ -42,17 +41,17 @@ function scaledConfig(canvas) {
 //   - Upper zone (position < PADDLE_HEIGHT/2):       deflects ball upward
 //   - Center zone (PADDLE_HEIGHT/2 to /2+1):         no extra Y deflection
 //   - Lower zone (position > PADDLE_HEIGHT/2 + 1):   deflects ball downward
-// Deflection magnitude is 1/distance-from-edge, capped at 1 unit per hit.
+// Deflection magnitude follows a quadratic curve: (1 - distance/halfHeight)²
+// giving 0 at the center and 1 at the edge, with smooth edge emphasis.
 function relativeHit(position, config = GAME) {
     const halfHeight = config.PADDLE_HEIGHT / 2;
-    let deltaVelY;
     if (position < halfHeight) {
-        deltaVelY = Math.min(1, Math.log(halfHeight / position));
+        const deltaVelY = (1 - position / halfHeight) ** 2;
         return -deltaVelY;
     }
     if (position > halfHeight + 1) {
-        const newPos = Math.abs(position - config.PADDLE_HEIGHT);
-        deltaVelY = Math.min(1, Math.log(halfHeight / newPos));
+        const distFromBottom = Math.abs(position - config.PADDLE_HEIGHT);
+        const deltaVelY = (1 - distFromBottom / halfHeight) ** 2;
         return deltaVelY;
     }
     return 0;
@@ -71,13 +70,13 @@ class Ball {
         this.velY = 0;
     }
 
-    move() {
+    move(dt) {
         const { WALL_MARGIN, BALL_SIZE } = this.config;
         if (this.y < WALL_MARGIN || this.y > this.canvasHeight - BALL_SIZE - WALL_MARGIN) {
             this.velY *= -1;
         }
-        this.x += this.velX;
-        this.y += this.velY;
+        this.x += this.velX * dt;
+        this.y += this.velY * dt;
     }
 }
 
@@ -99,10 +98,11 @@ class Player {
         this.y = canvas.height / 2 - this.height / 2;
     }
 
-    move(delta_y) {
-        if (this.y < this.config.WALL_MARGIN && delta_y < 0) return;
-        if (this.y > (this.canvasHeight - this.height) && delta_y > 0) return;
-        this.y += delta_y;
+    move(deltaY, dt) {
+        const movement = deltaY * dt;
+        if (this.y < this.config.WALL_MARGIN && movement < 0) return;
+        if (this.y > (this.canvasHeight - this.height) && movement > 0) return;
+        this.y += movement;
     }
 }
 
