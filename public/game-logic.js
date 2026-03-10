@@ -6,6 +6,7 @@ const GAME = {
     PADDLE_OFFSET: 20,       // horizontal distance of each paddle from the canvas edge
     PADDLE_SPEED: 200,       // pixels per second
     BALL_SPEED_X: 150,       // pixels per second
+    MAX_BALL_SPEED_X: 450,   // pixels per second — cap after acceleration
     WIN_SCORE: 10,
     WALL_MARGIN: 1,
     AI_MAX_SPEED: 160,       // pixels per second — lower than PADDLE_SPEED so humans can win
@@ -29,6 +30,7 @@ function scaledConfig(canvas) {
         PADDLE_OFFSET: Math.round(GAME.PADDLE_OFFSET * sx),
         PADDLE_SPEED: GAME.PADDLE_SPEED * s,
         BALL_SPEED_X: GAME.BALL_SPEED_X * s,
+        MAX_BALL_SPEED_X: GAME.MAX_BALL_SPEED_X * s,
         WIN_SCORE: GAME.WIN_SCORE,
         WALL_MARGIN: Math.max(1, Math.round(GAME.WALL_MARGIN * s)),
         AI_MAX_SPEED: GAME.AI_MAX_SPEED * s,

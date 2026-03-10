@@ -26,7 +26,7 @@ export function createRenderer(canvas) {
             ctx.fillRect(rightPlayer.x, rightPlayer.y, rightPlayer.width, rightPlayer.height);
         },
 
-        drawPrompt(text) {
+        drawPrompt(text, subtitle = null) {
             ctx.fillStyle = 'black';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             const fontSize = Math.max(20, Math.round(canvas.height * 0.06));
@@ -35,6 +35,12 @@ export function createRenderer(canvas) {
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+            if (subtitle) {
+                const subFontSize = Math.max(12, Math.round(canvas.height * 0.035));
+                ctx.font = `${subFontSize}px sans-serif`;
+                ctx.fillStyle = 'rgba(255,255,255,0.35)';
+                ctx.fillText(subtitle, canvas.width / 2, canvas.height / 2 + fontSize * 1.4);
+            }
             ctx.textAlign = 'left';
             ctx.textBaseline = 'alphabetic';
         },

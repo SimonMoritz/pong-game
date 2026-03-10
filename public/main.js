@@ -1,6 +1,7 @@
 import { GAME, scaledConfig, relativeHit, Ball, Player } from './game-logic.js';
 import { createRenderer } from './renderer.js';
 import { createInputHandler } from './input.js';
+import { createSoundEngine } from './sound.js';
 
 const canvas = document.getElementById('gb');
 const keys = createInputHandler();
@@ -12,6 +13,9 @@ let playing = false;
 let animationId = null;
 let lastTime = 0;
 let aiEnabled = true;
+let winnerLabel = null;
+
+const sound = createSoundEngine();
 
 // --- Initialisation ---
 
@@ -32,7 +36,7 @@ function resizeCanvas() {
         stopGame();
     }
     initGame();
-    renderer.drawPrompt('Click to play');
+    renderer.drawPrompt('Click to play', 'W / S · left    ↑ / ↓ · right');
 }
 
 // --- Game loop ---
@@ -74,6 +78,8 @@ function gameplay(dt) {
     if (keys.s) leftPlayer.move(config.PADDLE_SPEED, dt);
     if (keys.w) leftPlayer.move(-config.PADDLE_SPEED, dt);
 
+    const atWall = ball.y < config.WALL_MARGIN || ball.y > ball.canvasHeight - config.BALL_SIZE - config.WALL_MARGIN;
+    if (atWall) sound.wallBounce();
     ball.move(dt);
 
     if (ball.velX < 0) {
@@ -83,7 +89,7 @@ function gameplay(dt) {
     }
 
     checkIfBallOutOfBounds();
-    renderer.drawFrame(ball, leftPlayer, rightPlayer);
+    if (playing) renderer.drawFrame(ball, leftPlayer, rightPlayer);
 }
 
 // --- AI ---
@@ -105,8 +111,11 @@ function reflectLeft() {
         const relativeBallPosition = ball.y - leftPlayer.y;
         if (0 <= relativeBallPosition && relativeBallPosition <= leftPlayer.height) {
             ball.velX *= -1;
+            const newSpeed = Math.min(Math.abs(ball.velX) * 1.05, config.MAX_BALL_SPEED_X);
+            ball.velX = ball.velX < 0 ? -newSpeed : newSpeed;
             ball.velY += relativeHit(relativeBallPosition, config) * config.BALL_SPEED_X;
             ball.velY = Math.max(-config.MAX_BALL_SPEED_Y, Math.min(config.MAX_BALL_SPEED_Y, ball.velY));
+            sound.paddleHit();
         }
     }
 }
@@ -117,8 +126,11 @@ function reflectRight() {
         const relativeBallPosition = ball.y - rightPlayer.y;
         if (0 <= relativeBallPosition && relativeBallPosition <= rightPlayer.height) {
             ball.velX *= -1;
+            const newSpeed = Math.min(Math.abs(ball.velX) * 1.05, config.MAX_BALL_SPEED_X);
+            ball.velX = ball.velX < 0 ? -newSpeed : newSpeed;
             ball.velY += relativeHit(relativeBallPosition, config) * config.BALL_SPEED_X;
             ball.velY = Math.max(-config.MAX_BALL_SPEED_Y, Math.min(config.MAX_BALL_SPEED_Y, ball.velY));
+            sound.paddleHit();
         }
     }
 }
@@ -144,14 +156,21 @@ function checkIfBallOutOfBounds() {
 }
 
 function incrementScore(player) {
+    sound.score();
     if (player.side === 'left') {
         leftScore++;
         document.getElementById('leftScore').textContent = leftScore;
-        if (leftScore >= GAME.WIN_SCORE) resetScore();
+        if (leftScore >= GAME.WIN_SCORE) {
+            winnerLabel = 'Left wins!';
+            resetScore();
+        }
     } else {
         rightScore++;
         document.getElementById('rightScore').textContent = rightScore;
-        if (rightScore >= GAME.WIN_SCORE) resetScore();
+        if (rightScore >= GAME.WIN_SCORE) {
+            winnerLabel = aiEnabled ? 'AI wins!' : 'Right wins!';
+            resetScore();
+        }
     }
 }
 
@@ -161,7 +180,12 @@ function resetScore() {
     document.getElementById('leftScore').textContent = '0';
     document.getElementById('rightScore').textContent = '0';
     stopGame();
-    renderer.drawPrompt('Click to play');
+    if (winnerLabel) {
+        renderer.drawPrompt(winnerLabel, 'Click to play again');
+        winnerLabel = null;
+    } else {
+        renderer.drawPrompt('Click to play', 'W / S · left    ↑ / ↓ · right');
+    }
 }
 
 // --- Event wiring ---
