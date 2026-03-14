@@ -190,7 +190,11 @@ function resetScore() {
 }
 
 // --- Event wiring ---
-window.addEventListener('resize', resizeCanvas);
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(resizeCanvas, 100);
+});
 resizeCanvas();
 
 document.getElementById('aiToggle').addEventListener('click', () => {

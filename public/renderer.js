@@ -21,9 +21,9 @@ export function createRenderer(canvas) {
 
             // Game objects
             ctx.fillStyle = 'white';
-            ctx.fillRect(ball.x, ball.y, ball.width, ball.height);
-            ctx.fillRect(leftPlayer.x, leftPlayer.y, leftPlayer.width, leftPlayer.height);
-            ctx.fillRect(rightPlayer.x, rightPlayer.y, rightPlayer.width, rightPlayer.height);
+            ctx.fillRect(Math.round(ball.x), Math.round(ball.y), ball.width, ball.height);
+            ctx.fillRect(Math.round(leftPlayer.x), Math.round(leftPlayer.y), leftPlayer.width, leftPlayer.height);
+            ctx.fillRect(Math.round(rightPlayer.x), Math.round(rightPlayer.y), rightPlayer.width, rightPlayer.height);
         },
 
         drawPrompt(text, subtitle = null) {
