@@ -2,14 +2,14 @@
 const GAME = {
     BALL_SIZE: 4,
     PADDLE_WIDTH: 5,
-    PADDLE_HEIGHT: 26,
+    PADDLE_HEIGHT: 34,
     PADDLE_OFFSET: 20,       // horizontal distance of each paddle from the canvas edge
     PADDLE_SPEED: 200,       // pixels per second
     BALL_SPEED_X: 150,       // pixels per second
     MAX_BALL_SPEED_X: 450,   // pixels per second — cap after acceleration
     WIN_SCORE: 10,
     WALL_MARGIN: 1,
-    AI_MAX_SPEED: 160,       // pixels per second — lower than PADDLE_SPEED so humans can win
+    AI_MAX_SPEED: 120,       // pixels per second — lower than PADDLE_SPEED so humans can win
     MAX_BALL_SPEED_Y: 300,    // pixels per second — prevents velY from growing unbounded
 };
 

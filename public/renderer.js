@@ -22,11 +22,38 @@ export function createRenderer(canvas, viewport) {
             ctx.stroke();
             ctx.setLineDash([]);
 
-            // Game objects
+            // Paddles
             ctx.fillStyle = 'white';
-            ctx.fillRect(Math.round(ball.x), Math.round(ball.y), ball.width, ball.height);
             ctx.fillRect(Math.round(leftPlayer.x), Math.round(leftPlayer.y), leftPlayer.width, leftPlayer.height);
             ctx.fillRect(Math.round(rightPlayer.x), Math.round(rightPlayer.y), rightPlayer.width, rightPlayer.height);
+
+            // Ball — baseball
+            const bx = Math.round(ball.x);
+            const by = Math.round(ball.y);
+            const r = ball.width / 2;
+            const cx = bx + r;
+            const cy = by + r;
+
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Stitching
+            const sw = Math.max(1, r * 0.18);
+            ctx.strokeStyle = '#cc2222';
+            ctx.lineWidth = sw;
+            ctx.setLineDash([]);
+
+            // Left stitch arc
+            ctx.beginPath();
+            ctx.arc(cx - r * 0.3, cy, r * 0.55, -Math.PI * 0.6, Math.PI * 0.6);
+            ctx.stroke();
+
+            // Right stitch arc
+            ctx.beginPath();
+            ctx.arc(cx + r * 0.3, cy, r * 0.55, Math.PI * 0.4, Math.PI * 1.6);
+            ctx.stroke();
         },
 
         drawPrompt(text, subtitle = null) {
