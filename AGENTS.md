@@ -14,7 +14,7 @@ Static files are served directly from `public/`. The server (`server.js`) only s
 Node version is pinned in `.nvmrc`. Always activate it before running any Node commands:
 
 ```bash
-nvm use          # activates Node 22 as specified in .nvmrc
+nvm use          # activates Node 24 LTS as specified in .nvmrc
 npm install      # installs express (only runtime dependency)
 ```
 
@@ -62,6 +62,8 @@ test/
 ---
 
 ## Architecture
+
+The architecture should be modular and compositional going forward. This is an old project that should be improved — ambitious refactoring is encouraged.
 
 **Separation of concerns is the core principle.** Keep these boundaries strict:
 
@@ -178,6 +180,12 @@ node --test test/game-mechanics.test.js
 - **AI paddle** moves at `AI_MAX_SPEED` (< `PADDLE_SPEED`) so a human player can always win.
 - **DOM IDs** used in `main.js`: `gb` (canvas), `leftScore`, `rightScore`, `aiToggle`.
   Do not rename these without updating `index.html`.
+
+---
+
+## Deployment
+
+CI/CD is via GitHub Actions (`.github/workflows/deploy.yml`), triggered manually (`workflow_dispatch`). It builds a Docker image and runs it on a self-hosted runner with TLS certs stored as repository secrets (`PRIVKEY`, `FULLCHAIN`).
 
 ---
 
