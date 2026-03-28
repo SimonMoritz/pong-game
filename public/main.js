@@ -37,6 +37,14 @@ worker.addEventListener('message', (event) => {
     updateHud(state);
     playEvents(events);
     renderState();
+
+    if (state.playing && animationId === null) {
+        lastTime = performance.now();
+        animationId = requestAnimationFrame(gameLoop);
+    } else if (!state.playing) {
+        stopAnimationLoop();
+    }
+
     flushTick();
 });
 
@@ -63,9 +71,7 @@ function startGame() {
 
     pendingDt = 0;
     tickInFlight = false;
-    lastTime = performance.now();
     worker.postMessage({ type: 'start' });
-    animationId = requestAnimationFrame(gameLoop);
 }
 
 function stopGame() {
