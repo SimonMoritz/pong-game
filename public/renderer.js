@@ -2,12 +2,11 @@
 
 export function createRenderer(canvas, viewport) {
     const ctx = canvas.getContext('2d', { alpha: false });
+    const dpr = canvas.width / viewport.width;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     return {
         drawFrame(ball, leftPlayer, rightPlayer) {
-            const dpr = canvas.width / viewport.width;
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
             // Background
             ctx.fillStyle = 'black';
             ctx.fillRect(0, 0, viewport.width, viewport.height);
@@ -57,9 +56,6 @@ export function createRenderer(canvas, viewport) {
         },
 
         drawPrompt(text, subtitle = null) {
-            const dpr = canvas.width / viewport.width;
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
             ctx.fillStyle = 'black';
             ctx.fillRect(0, 0, viewport.width, viewport.height);
             const fontSize = Math.max(20, Math.round(viewport.height * 0.06));

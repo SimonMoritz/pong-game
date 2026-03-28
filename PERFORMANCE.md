@@ -79,7 +79,7 @@ window.addEventListener('resize', () => {
 
 ## Step 5 — Offscreen canvas for center divider
 
-Status: Not done
+Status: Not done — reverted, full-screen blit was slower than direct draw
 
 **Problem:** The dashed center line is static but redrawn every frame. `setLineDash` + `stroke` is one of the more expensive Canvas 2D operations, especially at high refresh rates on large screens.
 
@@ -96,7 +96,7 @@ const offscreen = new OffscreenCanvas(canvas.width, canvas.height);
 
 ## Step 6 — Pre-baked AudioBuffers
 
-Status: Not done
+Status: Done
 
 **Problem:** Every sound creates two new Web Audio nodes (`OscillatorNode` + `GainNode`), which are allocated and garbage collected on every paddle hit or wall bounce.
 
@@ -123,7 +123,7 @@ function generateBuffer(ac, frequency, duration) {
 
 ## Step 7 — Wall bounce double-check
 
-Status: Not done
+Status: Done
 
 **Problem:** The wall condition is evaluated twice per frame — once in `gameplay()` to trigger the sound, and once inside `Ball.move()` for the actual physics bounce. Not a real performance cost but inelegant duplication.
 
@@ -177,12 +177,15 @@ Tradeoffs: adds latency of one message round-trip per frame (~0ms in practice bu
 
 ## Current branch summary
 
-Implemented on `feature/performance`:
+Implemented on `feature/performance` and `feature/performance-refinements`:
 - HiDPI canvas support using a logical `viewport` plus a higher-density canvas backing store
 - `alpha: false` for the 2D rendering context
 - pixel-snapped draw coordinates for the ball and paddles
 - resize debouncing in `main.js`
+- pre-baked `AudioBuffer`s replacing per-hit oscillator/gain node allocation
+- wall bounce dedup (`Ball.move()` returns bounce flag, single source of truth)
+- DPR transform set once at renderer construction instead of every frame
 
-Also included on this branch, but outside the pure performance scope:
+Also included on these branches, but outside the pure performance scope:
 - gameplay tuning via larger paddles and slower AI
 - visual ball restyle in the renderer

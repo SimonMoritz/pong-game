@@ -85,9 +85,7 @@ function gameplay(dt) {
     if (keys.s) leftPlayer.move(config.PADDLE_SPEED, dt);
     if (keys.w) leftPlayer.move(-config.PADDLE_SPEED, dt);
 
-    const atWall = ball.y < config.WALL_MARGIN || ball.y > ball.canvasHeight - config.BALL_SIZE - config.WALL_MARGIN;
-    if (atWall) sound.wallBounce();
-    ball.move(dt);
+    if (ball.move(dt)) sound.wallBounce();
 
     if (ball.velX < 0) {
         reflectLeft();
