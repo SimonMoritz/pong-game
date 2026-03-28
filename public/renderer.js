@@ -5,29 +5,21 @@ export function createRenderer(canvas, viewport) {
     const dpr = canvas.width / viewport.width;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Pre-render the static center divider to an offscreen canvas
-    const divider = new OffscreenCanvas(canvas.width, canvas.height);
-    const dCtx = divider.getContext('2d');
-    dCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    dCtx.strokeStyle = 'rgba(255,255,255,0.15)';
-    dCtx.setLineDash([12, 12]);
-    dCtx.lineWidth = 2;
-    dCtx.beginPath();
-    dCtx.moveTo(viewport.width / 2, 0);
-    dCtx.lineTo(viewport.width / 2, viewport.height);
-    dCtx.stroke();
-
     return {
         drawFrame(ball, leftPlayer, rightPlayer) {
             // Background
             ctx.fillStyle = 'black';
             ctx.fillRect(0, 0, viewport.width, viewport.height);
 
-            // Center divider — blit from pre-rendered offscreen canvas
-            ctx.save();
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            ctx.drawImage(divider, 0, 0);
-            ctx.restore();
+            // Center divider
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            ctx.setLineDash([12, 12]);
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(viewport.width / 2, 0);
+            ctx.lineTo(viewport.width / 2, viewport.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
 
             // Paddles
             ctx.fillStyle = 'white';

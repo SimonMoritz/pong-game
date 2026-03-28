@@ -79,7 +79,7 @@ window.addEventListener('resize', () => {
 
 ## Step 5 — Offscreen canvas for center divider
 
-Status: Done
+Status: Not done — reverted, full-screen blit was slower than direct draw
 
 **Problem:** The dashed center line is static but redrawn every frame. `setLineDash` + `stroke` is one of the more expensive Canvas 2D operations, especially at high refresh rates on large screens.
 
@@ -182,7 +182,6 @@ Implemented on `feature/performance` and `feature/performance-refinements`:
 - `alpha: false` for the 2D rendering context
 - pixel-snapped draw coordinates for the ball and paddles
 - resize debouncing in `main.js`
-- offscreen canvas for center divider (blit instead of per-frame `setLineDash` + `stroke`)
 - pre-baked `AudioBuffer`s replacing per-hit oscillator/gain node allocation
 - wall bounce dedup (`Ball.move()` returns bounce flag, single source of truth)
 - DPR transform set once at renderer construction instead of every frame
