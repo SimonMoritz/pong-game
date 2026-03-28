@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Environment
-- Node: managed via nvm. Run `nvm use` before running any node commands (version pinned in `.nvmrc`).
+- Node: managed via nvm. Run `nvm use` before running any node commands (version pinned in `.nvmrc` — currently Node.js 24 LTS).
 
 ## Commands
 
