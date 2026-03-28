@@ -4,14 +4,16 @@
 
 **Problem:** On Retina/HiDPI screens the canvas renders at CSS pixels, not physical pixels. Everything looks blurry.
 
-**Fix:** In `resizeCanvas()`, set the canvas backing store to physical pixels and scale the context down:
+**Fix:** In `resizeCanvas()`, set the canvas backing store to physical pixels, but keep game logic in CSS pixels via a logical viewport object:
 ```js
 const dpr = window.devicePixelRatio || 1;
-canvas.width = window.innerWidth * dpr;
-canvas.height = window.innerHeight * dpr;
-ctx.scale(dpr, dpr);
+viewport.width = window.innerWidth;
+viewport.height = window.innerHeight;
+canvas.width = viewport.width * dpr;
+canvas.height = viewport.height * dpr;
+ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 ```
-The context scale means all drawing coordinates stay in CSS pixels — no other code changes needed. The `scaledConfig` call happens after resize so it automatically uses the new canvas dimensions.
+The transform keeps draw coordinates in CSS pixels, while the game logic and scaling use `viewport.width`/`viewport.height` instead of the physical backing-store size.
 
 **Files:** `main.js` (resizeCanvas), `renderer.js` (ctx scale on creation or per-frame)
 

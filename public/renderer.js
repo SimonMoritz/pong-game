@@ -1,21 +1,24 @@
 // Canvas rendering module — all drawing is isolated here.
 
-export function createRenderer(canvas) {
+export function createRenderer(canvas, viewport) {
     const ctx = canvas.getContext('2d', { alpha: false });
 
     return {
         drawFrame(ball, leftPlayer, rightPlayer) {
+            const dpr = canvas.width / viewport.width;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
             // Background
             ctx.fillStyle = 'black';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, viewport.width, viewport.height);
 
             // Center divider
             ctx.strokeStyle = 'rgba(255,255,255,0.15)';
             ctx.setLineDash([12, 12]);
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(canvas.width / 2, 0);
-            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.moveTo(viewport.width / 2, 0);
+            ctx.lineTo(viewport.width / 2, viewport.height);
             ctx.stroke();
             ctx.setLineDash([]);
 
@@ -27,19 +30,22 @@ export function createRenderer(canvas) {
         },
 
         drawPrompt(text, subtitle = null) {
+            const dpr = canvas.width / viewport.width;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
             ctx.fillStyle = 'black';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            const fontSize = Math.max(20, Math.round(canvas.height * 0.06));
+            ctx.fillRect(0, 0, viewport.width, viewport.height);
+            const fontSize = Math.max(20, Math.round(viewport.height * 0.06));
             ctx.fillStyle = 'rgba(255,255,255,0.6)';
             ctx.font = `${fontSize}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+            ctx.fillText(text, viewport.width / 2, viewport.height / 2);
             if (subtitle) {
-                const subFontSize = Math.max(12, Math.round(canvas.height * 0.035));
+                const subFontSize = Math.max(12, Math.round(viewport.height * 0.035));
                 ctx.font = `${subFontSize}px sans-serif`;
                 ctx.fillStyle = 'rgba(255,255,255,0.35)';
-                ctx.fillText(subtitle, canvas.width / 2, canvas.height / 2 + fontSize * 1.4);
+                ctx.fillText(subtitle, viewport.width / 2, viewport.height / 2 + fontSize * 1.4);
             }
             ctx.textAlign = 'left';
             ctx.textBaseline = 'alphabetic';

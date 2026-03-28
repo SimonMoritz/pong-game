@@ -5,6 +5,10 @@ import { createSoundEngine } from './sound.js';
 
 const canvas = document.getElementById('gb');
 const keys = createInputHandler();
+const viewport = {
+    width: 0,
+    height: 0,
+};
 
 // Game state
 let config, ball, leftPlayer, rightPlayer, renderer;
@@ -20,19 +24,21 @@ const sound = createSoundEngine();
 // --- Initialisation ---
 
 function initGame() {
-    config = scaledConfig(canvas);
-    ball = new Ball(canvas, config);
-    leftPlayer = new Player('left', canvas, config);
-    rightPlayer = new Player('right', canvas, config);
-    renderer = createRenderer(canvas);
+    config = scaledConfig(viewport);
+    ball = new Ball(viewport, config);
+    leftPlayer = new Player('left', viewport, config);
+    rightPlayer = new Player('right', viewport, config);
+    renderer = createRenderer(canvas, viewport);
     ball.velX = config.BALL_SPEED_X;
     ball.velY = (Math.random() - 0.5) * config.BALL_SPEED_X;
 }
 
 function resizeCanvas() {
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = window.innerWidth * dpr;
-    canvas.height = window.innerHeight * dpr;
+    viewport.width = window.innerWidth;
+    viewport.height = window.innerHeight;
+    canvas.width = viewport.width * dpr;
+    canvas.height = viewport.height * dpr;
     if (playing) {
         stopGame();
     }
@@ -122,8 +128,8 @@ function reflectLeft() {
 }
 
 function reflectRight() {
-    const rightEdge = canvas.width - config.PADDLE_OFFSET - rightPlayer.width;
-    if (rightEdge <= ball.x && ball.x <= canvas.width - config.PADDLE_OFFSET) {
+    const rightEdge = viewport.width - config.PADDLE_OFFSET - rightPlayer.width;
+    if (rightEdge <= ball.x && ball.x <= viewport.width - config.PADDLE_OFFSET) {
         const relativeBallPosition = ball.y - rightPlayer.y;
         if (0 <= relativeBallPosition && relativeBallPosition <= rightPlayer.height) {
             ball.velX *= -1;
@@ -138,19 +144,19 @@ function reflectRight() {
 
 // --- Scoring ---
 function newRound() {
-    ball.x = canvas.width / 2 - ball.width / 2;
-    ball.y = canvas.height / 2 - ball.height / 2;
+    ball.x = viewport.width / 2 - ball.width / 2;
+    ball.y = viewport.height / 2 - ball.height / 2;
     ball.velX = ball.velX > 0 ? -config.BALL_SPEED_X : config.BALL_SPEED_X;
     ball.velY = (Math.random() - 0.5) * config.BALL_SPEED_X;
-    leftPlayer.y = canvas.height / 2 - leftPlayer.height / 2;
-    rightPlayer.y = canvas.height / 2 - rightPlayer.height / 2;
+    leftPlayer.y = viewport.height / 2 - leftPlayer.height / 2;
+    rightPlayer.y = viewport.height / 2 - rightPlayer.height / 2;
 }
 
 function checkIfBallOutOfBounds() {
     if (ball.x < 0) {
         incrementScore(rightPlayer);
         newRound();
-    } else if (canvas.width < ball.x) {
+    } else if (viewport.width < ball.x) {
         incrementScore(leftPlayer);
         newRound();
     }
