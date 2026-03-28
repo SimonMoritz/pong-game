@@ -51,7 +51,7 @@ self.addEventListener('message', (event) => {
                 postFrame();
                 return;
             }
-            postFrame(stepGame(state, message.input, message.dt).events);
+            postStep(stepGame(state, message.input, message.dt));
             break;
     }
 });
@@ -63,5 +63,15 @@ function postFrame(events = []) {
         type: 'frame',
         state: getGameSnapshot(state),
         events,
+    });
+}
+
+function postStep(result) {
+    if (!state) return;
+
+    postMessage({
+        type: 'frame',
+        state: result.state,
+        events: result.events,
     });
 }

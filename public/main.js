@@ -23,6 +23,7 @@ let pendingDt = 0;
 let tickInFlight = false;
 
 const sound = createSoundEngine();
+const MAX_PENDING_DT = 0.2;
 
 worker.addEventListener('message', (event) => {
     const { type, state, events } = event.data;
@@ -91,7 +92,7 @@ function gameLoop(currentTime) {
     lastTime = currentTime;
 
     // Cap dt to prevent spiral of death on tab switch
-    pendingDt += Math.min(dt, 0.1);
+    pendingDt = Math.min(pendingDt + Math.min(dt, 0.1), MAX_PENDING_DT);
 
     flushTick();
     animationId = requestAnimationFrame(gameLoop);

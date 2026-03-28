@@ -75,6 +75,27 @@ test('stepGame increments the right score when the ball exits the left edge', ()
     assert.equal(result.state.ball.y, CANVAS.height / 2 - result.state.ball.height / 2);
 });
 
+test('stepGame emits a paddleHit event when the ball hits the left paddle', () => {
+    const state = createGameState(CANVAS, { random: () => 0.5 });
+
+    startGame(state);
+    state.leftPlayer.y = 50;
+    state.ball.x = state.config.PADDLE_OFFSET + 1;
+    state.ball.y = state.leftPlayer.y + state.leftPlayer.height / 2;
+    state.ball.velX = -state.config.BALL_SPEED_X;
+    state.ball.velY = 0;
+
+    const result = stepGame(state, {
+        w: false,
+        s: false,
+        arrowUp: false,
+        arrowDown: false,
+    }, 0);
+
+    assert.deepEqual(result.events, ['paddleHit']);
+    assert.ok(state.ball.velX > 0, `velX should be positive after paddle hit, got ${state.ball.velX}`);
+});
+
 test('winning a round resets the scoreboard and publishes the winner prompt', () => {
     const state = createGameState(CANVAS, { random: () => 0.5 });
 
@@ -96,6 +117,24 @@ test('winning a round resets the scoreboard and publishes the winner prompt', ()
     assert.equal(result.state.scores.right, 0);
     assert.equal(result.state.prompt, 'AI wins!');
     assert.equal(result.state.subtitle, 'Click to play again');
+});
+
+test('stepGame moves the AI paddle toward the ball when AI is enabled', () => {
+    const state = createGameState(CANVAS, { random: () => 0.5 });
+    const startY = state.rightPlayer.y;
+
+    startGame(state);
+    state.ball.y = state.rightPlayer.y + state.rightPlayer.height + 20;
+
+    stepGame(state, {
+        w: false,
+        s: false,
+        arrowUp: false,
+        arrowDown: false,
+    }, 0.1);
+
+    assert.ok(state.rightPlayer.y > startY,
+        `AI paddle should move down toward the ball, got ${state.rightPlayer.y} from ${startY}`);
 });
 
 test('resizeGameState preserves scores but resets play state to the default prompt', () => {
