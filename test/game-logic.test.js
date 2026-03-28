@@ -7,30 +7,30 @@ import { GAME, relativeHit } from '../public/game-logic.js';
 test('GAME constants have expected values', () => {
     assert.equal(GAME.BALL_SIZE, 4);
     assert.equal(GAME.PADDLE_WIDTH, 5);
-    assert.equal(GAME.PADDLE_HEIGHT, 26);
+    assert.equal(GAME.PADDLE_HEIGHT, 34);
     assert.equal(GAME.PADDLE_OFFSET, 20);
     assert.equal(GAME.PADDLE_SPEED, 200);       // pixels per second
     assert.equal(GAME.BALL_SPEED_X, 150);       // pixels per second
     assert.equal(GAME.MAX_BALL_SPEED_X, 450);   // pixels per second
     assert.equal(GAME.WIN_SCORE, 10);
     assert.equal(GAME.WALL_MARGIN, 1);
-    assert.equal(GAME.AI_MAX_SPEED, 160);       // pixels per second
+    assert.equal(GAME.AI_MAX_SPEED, 120);       // pixels per second
     assert.equal(GAME.MAX_BALL_SPEED_Y, 300);   // pixels per second
 });
 
 // --- relativeHit ---
 
-test('relativeHit returns 0 for center zone (positions 13-14)', () => {
-    assert.equal(relativeHit(13), 0);
-    assert.equal(relativeHit(14), 0);
+test('relativeHit returns 0 for center zone (positions 17-18)', () => {
+    assert.equal(relativeHit(17), 0);
+    assert.equal(relativeHit(18), 0);
 });
 
-test('relativeHit returns negative delta for upper zone (position < 13)', () => {
+test('relativeHit returns negative delta for upper zone (position < 17)', () => {
     const delta = relativeHit(6);
     assert.ok(delta < 0, `expected negative delta, got ${delta}`);
 });
 
-test('relativeHit returns positive delta for lower zone (position > 14)', () => {
+test('relativeHit returns positive delta for lower zone (position > 18)', () => {
     const delta = relativeHit(20);
     assert.ok(delta > 0, `expected positive delta, got ${delta}`);
 });
@@ -52,10 +52,10 @@ test('relativeHit gives smaller delta further from paddle edge', () => {
 });
 
 test('relativeHit deflection is symmetric: top and bottom zones mirror each other', () => {
-    // position 5 is 8 units from top (distance 5)
-    // position 21 is 5 units from bottom edge (|21-26|=5)
+    // position 5 is 5 units from top edge (distance 5)
+    // position 29 is 5 units from bottom edge (|29-34|=5)
     const topDelta = relativeHit(5);
-    const bottomDelta = relativeHit(21);
+    const bottomDelta = relativeHit(29);
     assert.ok(topDelta < 0, 'top zone delta should be negative');
     assert.ok(bottomDelta > 0, 'bottom zone delta should be positive');
     assert.equal(Math.abs(topDelta), Math.abs(bottomDelta));
