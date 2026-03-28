@@ -146,17 +146,19 @@ Single source of truth, no duplicated condition.
 
 ## Step 8 — Web Workers for game logic
 
-Status: Not done
+Status: Done
 
 **Problem:** Physics and game logic run on the main thread alongside rendering. On a busy page this could cause jank, since a long frame blocks both. For pong this is academic — the logic is trivial — but it's a useful pattern.
 
-**Fix:** Do not move only `game-logic.js` into a Worker. The current architecture has too much simulation code in `main.js` for that split to be clean. The correct boundary is:
+**Implemented architecture:** Step 8 was implemented by extracting the full simulation into a new pure engine module and running that engine inside a Worker. The main thread now handles rendering, DOM, input capture, and sound playback only.
+
+The final boundary is:
 
 - `main.js` owns DOM, canvas, HUD, keyboard listeners, audio, resize/click wiring, and the `requestAnimationFrame` clock
 - a new pure simulation layer owns authoritative game state, AI, collisions, scoring, round reset, and win logic
 - `game-worker.js` wraps that simulation layer and exchanges plain serialisable snapshots/events with the main thread
 
-That means step 8 should be implemented as an architectural extraction first, then a Worker integration:
+This was implemented as an architectural extraction first, then a Worker integration:
 
 ### Proposed architecture
 
@@ -269,12 +271,20 @@ Without that boundary, the Worker version will be harder to reason about than th
 - Increases architectural complexity significantly for a game whose logic is currently trivial
 - Becomes worthwhile only if the simulation grows meaningfully beyond basic pong
 
+### Final implementation notes
+
+- `public/game-engine.js` contains the pure simulation state machine
+- `public/game-worker.js` owns the authoritative runtime state and message protocol
+- `public/main.js` renders snapshots and handles audio from worker-emitted events
+- `public/game-logic.js` remains the low-level primitive module used by the engine
+- `test/game-engine.test.js` covers engine behavior directly
+
 ### Files
 
 - new `public/game-engine.js`
 - new `public/game-worker.js`
 - significant restructure of `public/main.js`
-- minimal reuse-focused changes in `public/game-logic.js`
+- new `test/game-engine.test.js`
 
 ---
 
@@ -301,6 +311,7 @@ Implemented on `feature/performance` and `feature/performance-refinements`:
 - pre-baked `AudioBuffer`s replacing per-hit oscillator/gain node allocation
 - wall bounce dedup (`Ball.move()` returns bounce flag, single source of truth)
 - DPR transform set once at renderer construction instead of every frame
+- worker-based simulation via `game-engine.js` + `game-worker.js`, with the main thread reduced to orchestration, rendering, and audio
 
 Also included on these branches, but outside the pure performance scope:
 - gameplay tuning via larger paddles and slower AI
