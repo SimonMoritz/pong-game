@@ -1,6 +1,13 @@
 # Performance & Quality Improvements
 
+Status key:
+- Done: implemented on `feature/performance`
+- Partial: some related work is implemented, but the full proposal below is not
+- Not done: still just a proposal
+
 ## Step 1 — Device Pixel Ratio (DPR)
+
+Status: Done
 
 **Problem:** On Retina/HiDPI screens the canvas renders at CSS pixels, not physical pixels. Everything looks blurry.
 
@@ -21,6 +28,8 @@ The transform keeps draw coordinates in CSS pixels, while the game logic and sca
 
 ## Step 2 — `alpha: false` context hint
 
+Status: Done
+
 **Problem:** The browser composites the canvas against the page background on every frame, even though the background is always solid black.
 
 **Fix:** Pass `{ alpha: false }` when acquiring the 2D context:
@@ -35,6 +44,8 @@ One-liner in `renderer.js`. Free performance, no behaviour change.
 
 ## Step 3 — Pixel snapping in renderer
 
+Status: Done
+
 **Problem:** Ball and paddle positions are floats (velocity × dt). Drawing `fillRect` at sub-pixel coordinates triggers anti-aliasing — fuzzy edges and extra GPU work.
 
 **Fix:** Wrap all draw coordinates in `Math.round()` in `drawFrame`:
@@ -48,6 +59,8 @@ Physics remain float-precision; only the draw call is snapped.
 ---
 
 ## Step 4 — Resize debounce
+
+Status: Done
 
 **Problem:** `resizeCanvas` fires continuously while dragging the window, reinitialising all game objects and recreating the renderer on every event.
 
@@ -66,6 +79,8 @@ window.addEventListener('resize', () => {
 
 ## Step 5 — Offscreen canvas for center divider
 
+Status: Not done
+
 **Problem:** The dashed center line is static but redrawn every frame. `setLineDash` + `stroke` is one of the more expensive Canvas 2D operations, especially at high refresh rates on large screens.
 
 **Fix:** Draw the divider once to an `OffscreenCanvas` on init/resize, then `drawImage` it each frame:
@@ -80,6 +95,8 @@ const offscreen = new OffscreenCanvas(canvas.width, canvas.height);
 ---
 
 ## Step 6 — Pre-baked AudioBuffers
+
+Status: Not done
 
 **Problem:** Every sound creates two new Web Audio nodes (`OscillatorNode` + `GainNode`), which are allocated and garbage collected on every paddle hit or wall bounce.
 
@@ -106,6 +123,8 @@ function generateBuffer(ac, frequency, duration) {
 
 ## Step 7 — Wall bounce double-check
 
+Status: Not done
+
 **Problem:** The wall condition is evaluated twice per frame — once in `gameplay()` to trigger the sound, and once inside `Ball.move()` for the actual physics bounce. Not a real performance cost but inelegant duplication.
 
 **Fix:** Have `Ball.move()` return whether a wall bounce occurred, and use that return value to trigger the sound:
@@ -126,6 +145,8 @@ Single source of truth, no duplicated condition.
 ---
 
 ## Step 8 — Web Workers for game logic
+
+Status: Not done
 
 **Problem:** Physics and game logic run on the main thread alongside rendering. On a busy page this could cause jank, since a long frame blocks both. For pong this is academic — the logic is trivial — but it's a useful pattern.
 
@@ -153,3 +174,15 @@ Tradeoffs: adds latency of one message round-trip per frame (~0ms in practice bu
 | 6. Pre-baked audio | Low-medium — reduces GC pressure | Low-medium |
 | 7. Wall bounce dedup | Low — code quality only | Trivial |
 | 8. Web Workers | Academic for pong | High |
+
+## Current branch summary
+
+Implemented on `feature/performance`:
+- HiDPI canvas support using a logical `viewport` plus a higher-density canvas backing store
+- `alpha: false` for the 2D rendering context
+- pixel-snapped draw coordinates for the ball and paddles
+- resize debouncing in `main.js`
+
+Also included on this branch, but outside the pure performance scope:
+- gameplay tuning via larger paddles and slower AI
+- visual ball restyle in the renderer
