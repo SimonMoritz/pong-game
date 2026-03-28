@@ -1,37 +1,53 @@
-import { GAME, scaledConfig, relativeHit, Ball, Player } from './game-logic.js';
 import { createRenderer } from './renderer.js';
 import { createInputHandler } from './input.js';
 import { createSoundEngine } from './sound.js';
 
 const canvas = document.getElementById('gb');
+const leftScoreLabel = document.getElementById('leftScore');
+const rightScoreLabel = document.getElementById('rightScore');
+const aiToggleButton = document.getElementById('aiToggle');
 const keys = createInputHandler();
 const viewport = {
     width: 0,
     height: 0,
 };
 
-// Game state
-let config, ball, leftPlayer, rightPlayer, renderer;
-let leftScore = 0, rightScore = 0;
-let playing = false;
+const worker = new Worker('./game-worker.js', { type: 'module' });
+
+// Main-thread orchestration state
+let renderer;
+let currentState = null;
 let animationId = null;
 let lastTime = 0;
-let aiEnabled = true;
-let winnerLabel = null;
+let pendingDt = 0;
+let tickInFlight = false;
 
 const sound = createSoundEngine();
+const MAX_PENDING_DT = 0.2;
 
-// --- Initialisation ---
+worker.addEventListener('message', (event) => {
+    const { type, state, events } = event.data;
 
-function initGame() {
-    config = scaledConfig(viewport);
-    ball = new Ball(viewport, config);
-    leftPlayer = new Player('left', viewport, config);
-    rightPlayer = new Player('right', viewport, config);
-    renderer = createRenderer(canvas, viewport);
-    ball.velX = config.BALL_SPEED_X;
-    ball.velY = (Math.random() - 0.5) * config.BALL_SPEED_X;
-}
+    if (type !== 'frame') {
+        return;
+    }
+
+    currentState = state;
+    tickInFlight = false;
+
+    updateHud(state);
+    playEvents(events);
+    renderState();
+
+    if (state.playing && animationId === null) {
+        lastTime = performance.now();
+        animationId = requestAnimationFrame(gameLoop);
+    } else if (!state.playing) {
+        stopAnimationLoop();
+    }
+
+    flushTick();
+});
 
 function resizeCanvas() {
     const dpr = window.devicePixelRatio || 1;
@@ -39,158 +55,106 @@ function resizeCanvas() {
     viewport.height = window.innerHeight;
     canvas.width = viewport.width * dpr;
     canvas.height = viewport.height * dpr;
-    if (playing) {
-        stopGame();
-    }
-    initGame();
-    renderer.drawPrompt('Click to play', 'W / S · left    ↑ / ↓ · right');
+    renderer = createRenderer(canvas, viewport);
+    stopAnimationLoop();
+    pendingDt = 0;
+    tickInFlight = false;
+    worker.postMessage({
+        type: 'resize',
+        viewport,
+    });
 }
 
 // --- Game loop ---
 
 function startGame() {
-    playing = true;
-    lastTime = performance.now();
-    animationId = requestAnimationFrame(gameLoop);
+    if (!currentState || currentState.playing) return;
+
+    pendingDt = 0;
+    tickInFlight = false;
+    worker.postMessage({ type: 'start' });
 }
 
 function stopGame() {
-    if (animationId) {
-        cancelAnimationFrame(animationId);
-        animationId = null;
-    }
-    playing = false;
+    worker.postMessage({ type: 'stop' });
+    stopAnimationLoop();
+    pendingDt = 0;
+    tickInFlight = false;
 }
 
 function gameLoop(currentTime) {
-    if (!playing) return;
+    if (!currentState || !currentState.playing) {
+        animationId = null;
+        return;
+    }
 
     const dt = (currentTime - lastTime) / 1000;  // convert ms to seconds
     lastTime = currentTime;
 
     // Cap dt to prevent spiral of death on tab switch
-    const cappedDt = Math.min(dt, 0.1);
+    pendingDt = Math.min(pendingDt + Math.min(dt, 0.1), MAX_PENDING_DT);
 
-    gameplay(cappedDt);
+    flushTick();
     animationId = requestAnimationFrame(gameLoop);
 }
 
-function gameplay(dt) {
-    if (aiEnabled) {
-        moveAiPaddle(dt);
-    } else {
-        if (keys.arrowDown) rightPlayer.move(config.PADDLE_SPEED, dt);
-        if (keys.arrowUp) rightPlayer.move(-config.PADDLE_SPEED, dt);
-    }
-    if (keys.s) leftPlayer.move(config.PADDLE_SPEED, dt);
-    if (keys.w) leftPlayer.move(-config.PADDLE_SPEED, dt);
-
-    if (ball.move(dt)) sound.wallBounce();
-
-    if (ball.velX < 0) {
-        reflectLeft();
-    } else {
-        reflectRight();
+function flushTick() {
+    if (!currentState || !currentState.playing || tickInFlight || pendingDt <= 0) {
+        return;
     }
 
-    checkIfBallOutOfBounds();
-    if (playing) renderer.drawFrame(ball, leftPlayer, rightPlayer);
+    const dt = Math.min(pendingDt, 0.1);
+    pendingDt = Math.max(0, pendingDt - dt);
+    tickInFlight = true;
+
+    worker.postMessage({
+        type: 'tick',
+        dt,
+        input: {
+            w: keys.w,
+            s: keys.s,
+            arrowUp: keys.arrowUp,
+            arrowDown: keys.arrowDown,
+        },
+    });
 }
 
-// --- AI ---
+// --- UI updates ---
 
-function moveAiPaddle(dt) {
-    const paddleCenter = rightPlayer.y + rightPlayer.height / 2;
-    const ballCenter = ball.y + ball.height / 2;
-    const diff = ballCenter - paddleCenter;
-    const maxMove = config.AI_MAX_SPEED * dt;
-    const step = Math.min(Math.abs(diff), maxMove);
-    // Convert step back to speed (px/s) for the move function
-    const speed = dt > 0 ? step / dt : 0;
-    rightPlayer.move(diff > 0 ? speed : -speed, dt);
+function updateHud(state) {
+    leftScoreLabel.textContent = String(state.scores.left);
+    rightScoreLabel.textContent = String(state.scores.right);
+    aiToggleButton.textContent = state.aiEnabled ? 'AI: ON' : 'AI: OFF';
 }
 
-// --- Ball reflection ---
-function reflectLeft() {
-    if (config.PADDLE_OFFSET <= ball.x && ball.x <= config.PADDLE_OFFSET + leftPlayer.width) {
-        const relativeBallPosition = ball.y - leftPlayer.y;
-        if (0 <= relativeBallPosition && relativeBallPosition <= leftPlayer.height) {
-            ball.velX *= -1;
-            const newSpeed = Math.min(Math.abs(ball.velX) * 1.05, config.MAX_BALL_SPEED_X);
-            ball.velX = ball.velX < 0 ? -newSpeed : newSpeed;
-            ball.velY += relativeHit(relativeBallPosition, config) * config.BALL_SPEED_X;
-            ball.velY = Math.max(-config.MAX_BALL_SPEED_Y, Math.min(config.MAX_BALL_SPEED_Y, ball.velY));
+function renderState() {
+    if (!renderer || !currentState) return;
+
+    if (currentState.prompt) {
+        renderer.drawPrompt(currentState.prompt, currentState.subtitle);
+        return;
+    }
+
+    renderer.drawFrame(currentState.ball, currentState.leftPlayer, currentState.rightPlayer);
+}
+
+function playEvents(events) {
+    for (const event of events) {
+        if (event === 'wallBounce') {
+            sound.wallBounce();
+        } else if (event === 'paddleHit') {
             sound.paddleHit();
+        } else if (event === 'score') {
+            sound.score();
         }
     }
 }
 
-function reflectRight() {
-    const rightEdge = viewport.width - config.PADDLE_OFFSET - rightPlayer.width;
-    if (rightEdge <= ball.x && ball.x <= viewport.width - config.PADDLE_OFFSET) {
-        const relativeBallPosition = ball.y - rightPlayer.y;
-        if (0 <= relativeBallPosition && relativeBallPosition <= rightPlayer.height) {
-            ball.velX *= -1;
-            const newSpeed = Math.min(Math.abs(ball.velX) * 1.05, config.MAX_BALL_SPEED_X);
-            ball.velX = ball.velX < 0 ? -newSpeed : newSpeed;
-            ball.velY += relativeHit(relativeBallPosition, config) * config.BALL_SPEED_X;
-            ball.velY = Math.max(-config.MAX_BALL_SPEED_Y, Math.min(config.MAX_BALL_SPEED_Y, ball.velY));
-            sound.paddleHit();
-        }
-    }
-}
+function stopAnimationLoop() {
+    if (!animationId) return;
 
-// --- Scoring ---
-function newRound() {
-    ball.x = viewport.width / 2 - ball.width / 2;
-    ball.y = viewport.height / 2 - ball.height / 2;
-    ball.velX = ball.velX > 0 ? -config.BALL_SPEED_X : config.BALL_SPEED_X;
-    ball.velY = (Math.random() - 0.5) * config.BALL_SPEED_X;
-    leftPlayer.y = viewport.height / 2 - leftPlayer.height / 2;
-    rightPlayer.y = viewport.height / 2 - rightPlayer.height / 2;
-}
-
-function checkIfBallOutOfBounds() {
-    if (ball.x < 0) {
-        incrementScore(rightPlayer);
-        newRound();
-    } else if (viewport.width < ball.x) {
-        incrementScore(leftPlayer);
-        newRound();
-    }
-}
-
-function incrementScore(player) {
-    sound.score();
-    if (player.side === 'left') {
-        leftScore++;
-        document.getElementById('leftScore').textContent = leftScore;
-        if (leftScore >= GAME.WIN_SCORE) {
-            winnerLabel = 'Left wins!';
-            resetScore();
-        }
-    } else {
-        rightScore++;
-        document.getElementById('rightScore').textContent = rightScore;
-        if (rightScore >= GAME.WIN_SCORE) {
-            winnerLabel = aiEnabled ? 'AI wins!' : 'Right wins!';
-            resetScore();
-        }
-    }
-}
-
-function resetScore() {
-    leftScore = 0;
-    rightScore = 0;
-    document.getElementById('leftScore').textContent = '0';
-    document.getElementById('rightScore').textContent = '0';
-    stopGame();
-    if (winnerLabel) {
-        renderer.drawPrompt(winnerLabel, 'Click to play again');
-        winnerLabel = null;
-    } else {
-        renderer.drawPrompt('Click to play', 'W / S · left    ↑ / ↓ · right');
-    }
+    cancelAnimationFrame(animationId);
+    animationId = null;
 }
 
 // --- Event wiring ---
@@ -201,13 +165,17 @@ window.addEventListener('resize', () => {
 });
 resizeCanvas();
 
-document.getElementById('aiToggle').addEventListener('click', () => {
-    aiEnabled = !aiEnabled;
-    document.getElementById('aiToggle').textContent = aiEnabled ? 'AI: ON' : 'AI: OFF';
+aiToggleButton.addEventListener('click', () => {
+    if (!currentState) return;
+
+    worker.postMessage({
+        type: 'setAiEnabled',
+        value: !currentState.aiEnabled,
+    });
 });
 
 canvas.addEventListener('click', () => {
-    if (!playing) {
+    if (!currentState || !currentState.playing) {
         startGame();
     } else {
         stopGame();

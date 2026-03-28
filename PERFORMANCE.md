@@ -146,19 +146,145 @@ Single source of truth, no duplicated condition.
 
 ## Step 8 — Web Workers for game logic
 
-Status: Not done
+Status: Done
 
 **Problem:** Physics and game logic run on the main thread alongside rendering. On a busy page this could cause jank, since a long frame blocks both. For pong this is academic — the logic is trivial — but it's a useful pattern.
 
-**Fix:** Move `game-logic.js` into a Worker. The main thread posts input state each frame and receives updated game state back:
-```
-Main thread:  input → postMessage({keys, dt}) → Worker
-Worker:       physics tick → postMessage({ball, leftPlayer, rightPlayer}) → Main thread
-Main thread:  render from received state
-```
-Tradeoffs: adds latency of one message round-trip per frame (~0ms in practice but non-zero), complicates the architecture significantly, and requires serialising game state. Only worth it if logic becomes genuinely expensive.
+**Implemented architecture:** Step 8 was implemented by extracting the full simulation into a new pure engine module and running that engine inside a Worker. The main thread now handles rendering, DOM, input capture, and sound playback only.
 
-**Files:** new `worker.js`, significant restructure of `main.js` and `game-logic.js`
+The final boundary is:
+
+- `main.js` owns DOM, canvas, HUD, keyboard listeners, audio, resize/click wiring, and the `requestAnimationFrame` clock
+- a new pure simulation layer owns authoritative game state, AI, collisions, scoring, round reset, and win logic
+- `game-worker.js` wraps that simulation layer and exchanges plain serialisable snapshots/events with the main thread
+
+This was implemented as an architectural extraction first, then a Worker integration:
+
+### Proposed architecture
+
+**1. Keep `game-logic.js` as low-level pure primitives**
+
+`game-logic.js` should remain the home of:
+- `GAME`
+- `scaledConfig()`
+- `relativeHit()`
+- `Ball`
+- `Player`
+
+It should not become the Worker entry point. It is better treated as reusable simulation building blocks for both tests and the engine layer.
+
+**2. Add a new pure `game-engine.js`**
+
+Create a new module responsible for the full simulation state machine. This module should contain the logic that currently lives in `main.js`:
+- initial state creation from `viewport` and `scaledConfig`
+- serve direction and round reset
+- player input application
+- AI paddle movement
+- ball movement
+- paddle reflection
+- scoring
+- win detection
+
+Suggested API shape:
+
+```js
+function createGameState(viewport, options = {}) { ... }
+function resizeGameState(state, viewport) { ... }
+function stepGame(state, input, dt) { ... }
+```
+
+`stepGame()` should return both the next serialisable state and a list of discrete events:
+
+```js
+{
+    state,
+    events: ['wallBounce', 'paddleHit', 'score'],
+}
+```
+
+This keeps side effects off the simulation path and gives the main thread enough information to play sounds and update UI.
+
+**3. Add `game-worker.js` as a thin adapter**
+
+The Worker should not contain game rules directly. It should:
+- hold the authoritative engine state
+- handle messages from the main thread
+- call `createGameState()`, `resizeGameState()`, and `stepGame()`
+- post back snapshots and events
+
+Suggested message flow:
+
+```js
+// main -> worker
+{ type: 'init', viewport: { width, height } }
+{ type: 'start' }
+{ type: 'stop' }
+{ type: 'resize', viewport: { width, height } }
+{ type: 'setAiEnabled', value: true }
+{ type: 'tick', dt, input: { w, s, arrowUp, arrowDown } }
+
+// worker -> main
+{
+    type: 'frame',
+    state: {
+        ball: { x, y, width, height },
+        leftPlayer: { x, y, width, height },
+        rightPlayer: { x, y, width, height },
+        scores: { left, right },
+        playing: true,
+        prompt: null,
+    },
+    events: ['wallBounce', 'paddleHit'],
+}
+```
+
+Cross-thread messages should only use plain objects. Do not post `Ball` or `Player` instances across the boundary.
+
+**4. Reduce `main.js` to orchestration only**
+
+After the extraction, `main.js` should stop owning simulation rules. Its responsibilities become:
+- create renderer, sound engine, and input handler
+- maintain the latest snapshot received from the worker
+- send `tick` messages from `requestAnimationFrame`
+- render the received snapshot
+- update DOM score labels and prompts from worker state
+- trigger audio from worker events
+
+This is the key architectural rule for step 8:
+
+> Worker owns all simulation state. Main thread owns all side effects.
+
+Without that boundary, the Worker version will be harder to reason about than the current single-thread design.
+
+### Recommended implementation sequence
+
+1. Extract a pure simulation module from `main.js` without using a Worker yet.
+2. Move AI, reflection, scoring, round reset, and win logic into that module.
+3. Change `main.js` to render immutable snapshots rather than mutating `ball` and `Player` instances directly.
+4. Introduce `game-worker.js` and place the engine behind `postMessage`.
+5. Keep sound on the main thread, driven by worker-emitted events.
+
+### Tradeoffs
+
+- Adds one message round-trip per frame, which is small but non-zero
+- Requires state serialisation on every tick
+- Increases architectural complexity significantly for a game whose logic is currently trivial
+- Becomes worthwhile only if the simulation grows meaningfully beyond basic pong
+
+### Final implementation notes
+
+- `public/game-engine.js` contains the pure simulation state machine
+- `public/game-worker.js` owns the authoritative runtime state and message protocol
+- `public/main.js` renders snapshots and handles audio from worker-emitted events
+- `public/game-logic.js` remains the low-level primitive module used by the engine
+- `test/game-engine.test.js` covers engine behavior directly
+
+### Files
+
+- new `public/game-engine.js`
+- new `public/game-worker.js`
+- significant restructure of `public/main.js`
+- new `test/game-engine.test.js`
 
 ---
 
@@ -185,6 +311,7 @@ Implemented on `feature/performance` and `feature/performance-refinements`:
 - pre-baked `AudioBuffer`s replacing per-hit oscillator/gain node allocation
 - wall bounce dedup (`Ball.move()` returns bounce flag, single source of truth)
 - DPR transform set once at renderer construction instead of every frame
+- worker-based simulation via `game-engine.js` + `game-worker.js`, with the main thread reduced to orchestration, rendering, and audio
 
 Also included on these branches, but outside the pure performance scope:
 - gameplay tuning via larger paddles and slower AI
