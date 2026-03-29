@@ -23,13 +23,6 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.DO_SPACES_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.DO_SPACES_SECRET_ACCESS_KEY }}
-      AWS_REGION: us-east-1
-      DO_SPACES_BUCKET: ${{ vars.DO_SPACES_BUCKET }}
-      DO_SPACES_REGION: ${{ vars.DO_SPACES_REGION }}
-      DO_CDN_ID: ${{ vars.DO_CDN_ID }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -48,32 +41,13 @@ jobs:
 
       - name: Validate deployment settings
         run: |
-          test -n "$DO_SPACES_BUCKET"
-          test -n "$DO_SPACES_REGION"
-          test -n "$DO_CDN_ID"
-          test -n "$AWS_ACCESS_KEY_ID"
-          test -n "$AWS_SECRET_ACCESS_KEY"
+          test -n "${{ secrets.CLOUDFLARE_API_TOKEN }}"
+          test -n "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          test -n "${{ vars.CLOUDFLARE_PAGES_PROJECT_NAME }}"
 
-      - name: Sync static files to Spaces
-        run: |
-          aws s3 sync public/ "s3://${DO_SPACES_BUCKET}" \
-            --delete \
-            --acl public-read \
-            --cache-control 'public, max-age=3600' \
-            --endpoint-url "https://${DO_SPACES_REGION}.digitaloceanspaces.com"
-
-      - name: Upload index with short cache lifetime
-        run: |
-          aws s3 cp public/index.html "s3://${DO_SPACES_BUCKET}/index.html" \
-            --acl public-read \
-            --cache-control 'public, max-age=60, must-revalidate' \
-            --content-type 'text/html; charset=utf-8' \
-            --endpoint-url "https://${DO_SPACES_REGION}.digitaloceanspaces.com"
-
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
         with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-
-      - name: Purge Spaces CDN cache
-        run: doctl compute cdn flush "$DO_CDN_ID" --files '*'
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy public --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT_NAME }}
