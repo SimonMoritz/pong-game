@@ -205,7 +205,7 @@ function incrementScore(state, side) {
     if (side === 'left') {
         state.leftScore++;
         if (state.leftScore >= GAME.WIN_SCORE) {
-            state.prompt = 'Left wins!';
+            state.prompt = state.aiEnabled ? 'Human wins!' : 'Left wins!';
             state.subtitle = RESTART_SUBTITLE;
             resetScore(state);
         }
@@ -214,7 +214,7 @@ function incrementScore(state, side) {
 
     state.rightScore++;
     if (state.rightScore >= GAME.WIN_SCORE) {
-        state.prompt = state.aiEnabled ? 'AI wins!' : 'Right wins!';
+        state.prompt = state.aiEnabled ? 'AI wins' : 'Right wins!';
         state.subtitle = RESTART_SUBTITLE;
         resetScore(state);
     }

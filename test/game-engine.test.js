@@ -115,7 +115,30 @@ test('winning a round resets the scoreboard and publishes the winner prompt', ()
     assert.equal(result.state.playing, false);
     assert.equal(result.state.scores.left, 0);
     assert.equal(result.state.scores.right, 0);
-    assert.equal(result.state.prompt, 'AI wins!');
+    assert.equal(result.state.prompt, 'AI wins');
+    assert.equal(result.state.subtitle, 'Click to play again');
+});
+
+test('winning against the AI publishes the human winner prompt', () => {
+    const state = createGameState(CANVAS, { random: () => 0.5, aiEnabled: true });
+
+    startGame(state);
+    state.leftScore = GAME.WIN_SCORE - 1;
+    state.ball.x = CANVAS.width + 1;
+    state.ball.velX = 0;
+
+    const result = stepGame(state, {
+        w: false,
+        s: false,
+        arrowUp: false,
+        arrowDown: false,
+    }, 0);
+
+    assert.deepEqual(result.events, ['score']);
+    assert.equal(result.state.playing, false);
+    assert.equal(result.state.scores.left, 0);
+    assert.equal(result.state.scores.right, 0);
+    assert.equal(result.state.prompt, 'Human wins!');
     assert.equal(result.state.subtitle, 'Click to play again');
 });
 
