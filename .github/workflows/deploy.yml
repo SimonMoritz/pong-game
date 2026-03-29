@@ -1,35 +1,79 @@
-name: build - deploy
-run-name: ${{ github.actor }} is building and deploying
-on: workflow_dispatch
-jobs:
-  create-cert-key-files:
-    runs-on: self-hosted
-    steps:
-      - name: create-private-key-file
-        uses: actions/checkout@v4
-        env:
-          PRIVKEY: ${{secrets.PRIVKEY}}
-          FULLCHAIN: ${{secrets.FULLCHAIN}}
-      - run: |
-          touch privkey.pem
-          echo "${{secrets.PRIVKEY}}" > privkey.pem
-          touch fullchain.pem
-          echo "${{secrets.FULLCHAIN}}" > fullchain.pem
-  build-image:
-    needs: create-cert-key-files
-    runs-on: self-hosted
-    steps:
-      - name: build image
-        uses: docker/setup-buildx-action@v3
-      - run: docker build -t pong-game .
+name: deploy
+run-name: ${{ github.actor }} is deploying the site
 
-  run:
-    needs: build-image
-    runs-on: self-hosted
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/deploy.yml'
+      - 'public/**'
+      - 'test/**'
+      - 'package.json'
+      - 'package-lock.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.DO_SPACES_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.DO_SPACES_SECRET_ACCESS_KEY }}
+      AWS_REGION: us-east-1
+      DO_SPACES_BUCKET: ${{ vars.DO_SPACES_BUCKET }}
+      DO_SPACES_REGION: ${{ vars.DO_SPACES_REGION }}
+      DO_CDN_ID: ${{ vars.DO_CDN_ID }}
     steps:
-      - run: |
-          docker stop pong || true
-          docker rm pong   || true
-          docker run --name pong -dp "${{vars.IP}}:443:443" pong-game
-          echo "y" | docker container prune
-          echo "y" | docker image prune
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: node --test
+
+      - name: Validate deployment settings
+        run: |
+          test -n "$DO_SPACES_BUCKET"
+          test -n "$DO_SPACES_REGION"
+          test -n "$DO_CDN_ID"
+          test -n "$AWS_ACCESS_KEY_ID"
+          test -n "$AWS_SECRET_ACCESS_KEY"
+
+      - name: Sync static files to Spaces
+        run: |
+          aws s3 sync public/ "s3://${DO_SPACES_BUCKET}" \
+            --delete \
+            --acl public-read \
+            --cache-control 'public, max-age=3600' \
+            --endpoint-url "https://${DO_SPACES_REGION}.digitaloceanspaces.com"
+
+      - name: Upload index with short cache lifetime
+        run: |
+          aws s3 cp public/index.html "s3://${DO_SPACES_BUCKET}/index.html" \
+            --acl public-read \
+            --cache-control 'public, max-age=60, must-revalidate' \
+            --content-type 'text/html; charset=utf-8' \
+            --endpoint-url "https://${DO_SPACES_REGION}.digitaloceanspaces.com"
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Purge Spaces CDN cache
+        run: doctl compute cdn flush "$DO_CDN_ID" --files '*'
