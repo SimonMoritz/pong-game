@@ -79,7 +79,7 @@ window.addEventListener('resize', () => {
 
 ## Step 5 — Offscreen canvas for center divider
 
-Status: Not done — reverted, full-screen blit was slower than direct draw
+Status: Done - with part off-screen canvas instead of full
 
 **Problem:** The dashed center line is static but redrawn every frame. `setLineDash` + `stroke` is one of the more expensive Canvas 2D operations, especially at high refresh rates on large screens.
 

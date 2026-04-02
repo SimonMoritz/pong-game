@@ -2,11 +2,16 @@ import { GAME, scaledConfig, relativeHit, Ball, Player } from './game-logic.js';
 
 const DEFAULT_PROMPT = 'Click to play';
 const DEFAULT_SUBTITLE = 'W / S · left    ↑ / ↓ · right';
+const MOBILE_PROMPT = 'Tap to play';
+const MOBILE_SUBTITLE = null;
 const RESTART_SUBTITLE = 'Click to play again';
+const MOBILE_RESTART_SUBTITLE = 'Tap to play again';
+const SERVE_DELAY = 1.0;
 
 // --- State creation ---
 
 export function createGameState(viewport, options = {}) {
+    const mobile = options.mobile ?? false;
     const state = {
         viewport: {
             width: viewport.width,
@@ -19,9 +24,11 @@ export function createGameState(viewport, options = {}) {
         leftScore: 0,
         rightScore: 0,
         aiEnabled: options.aiEnabled ?? true,
+        mobile,
         playing: false,
-        prompt: DEFAULT_PROMPT,
-        subtitle: DEFAULT_SUBTITLE,
+        serveDelay: 0,
+        prompt: mobile ? MOBILE_PROMPT : DEFAULT_PROMPT,
+        subtitle: mobile ? MOBILE_SUBTITLE : DEFAULT_SUBTITLE,
         randomSource: options.random ?? Math.random,
     };
 
@@ -36,8 +43,8 @@ export function resizeGameState(state, viewport) {
         height: viewport.height,
     };
     state.playing = false;
-    state.prompt = DEFAULT_PROMPT;
-    state.subtitle = DEFAULT_SUBTITLE;
+    state.prompt = state.mobile ? MOBILE_PROMPT : DEFAULT_PROMPT;
+    state.subtitle = state.mobile ? MOBILE_SUBTITLE : DEFAULT_SUBTITLE;
 
     initialiseEntities(state);
 
@@ -75,20 +82,24 @@ export function stepGame(state, input, dt) {
 
     applyPlayerInput(state, input, dt);
 
-    if (state.ball.move(dt)) {
-        events.push('wallBounce');
-    }
+    if (state.serveDelay > 0) {
+        state.serveDelay = Math.max(0, state.serveDelay - dt);
+    } else {
+        if (state.ball.move(dt)) {
+            events.push('wallBounce');
+        }
 
-    if (state.ball.velX < 0) {
-        if (reflectLeft(state)) {
+        if (state.ball.velX < 0) {
+            if (reflectLeft(state)) {
+                events.push('paddleHit');
+            }
+        } else if (reflectRight(state)) {
             events.push('paddleHit');
         }
-    } else if (reflectRight(state)) {
-        events.push('paddleHit');
-    }
 
-    if (checkIfBallOutOfBounds(state)) {
-        events.push('score');
+        if (checkIfBallOutOfBounds(state)) {
+            events.push('score');
+        }
     }
 
     return {
@@ -130,12 +141,29 @@ function applyPlayerInput(state, input, dt) {
     if (state.aiEnabled) {
         moveAiPaddle(state, dt);
     } else {
-        if (input.arrowDown) state.rightPlayer.move(state.config.PADDLE_SPEED, dt);
-        if (input.arrowUp) state.rightPlayer.move(-state.config.PADDLE_SPEED, dt);
+        if (input.rightTouchY != null) {
+            moveTowardY(state.rightPlayer, input.rightTouchY, state.config.PADDLE_SPEED, dt);
+        } else {
+            if (input.arrowDown) state.rightPlayer.move(state.config.PADDLE_SPEED, dt);
+            if (input.arrowUp) state.rightPlayer.move(-state.config.PADDLE_SPEED, dt);
+        }
     }
 
-    if (input.s) state.leftPlayer.move(state.config.PADDLE_SPEED, dt);
-    if (input.w) state.leftPlayer.move(-state.config.PADDLE_SPEED, dt);
+    if (input.leftTouchY != null) {
+        moveTowardY(state.leftPlayer, input.leftTouchY, state.config.PADDLE_SPEED, dt);
+    } else {
+        if (input.s) state.leftPlayer.move(state.config.PADDLE_SPEED, dt);
+        if (input.w) state.leftPlayer.move(-state.config.PADDLE_SPEED, dt);
+    }
+}
+
+function moveTowardY(player, targetY, speed, dt) {
+    const paddleCenter = player.y + player.height / 2;
+    const diff = targetY - paddleCenter;
+    const maxMove = speed * dt;
+    const step = Math.min(Math.abs(diff), maxMove);
+    const direction = diff > 0 ? step / dt : -step / dt;
+    if (dt > 0) player.move(direction, dt);
 }
 
 function moveAiPaddle(state, dt) {
@@ -202,11 +230,12 @@ function checkIfBallOutOfBounds(state) {
 }
 
 function incrementScore(state, side) {
+    const restartSub = state.mobile ? MOBILE_RESTART_SUBTITLE : RESTART_SUBTITLE;
     if (side === 'left') {
         state.leftScore++;
         if (state.leftScore >= GAME.WIN_SCORE) {
             state.prompt = state.aiEnabled ? 'Human wins!' : 'Left wins!';
-            state.subtitle = RESTART_SUBTITLE;
+            state.subtitle = restartSub;
             resetScore(state);
         }
         return;
@@ -215,7 +244,7 @@ function incrementScore(state, side) {
     state.rightScore++;
     if (state.rightScore >= GAME.WIN_SCORE) {
         state.prompt = state.aiEnabled ? 'AI wins' : 'Right wins!';
-        state.subtitle = RESTART_SUBTITLE;
+        state.subtitle = restartSub;
         resetScore(state);
     }
 }
@@ -233,6 +262,7 @@ function newRound(state) {
     state.ball.velY = randomServeVelocity(state);
     state.leftPlayer.y = state.viewport.height / 2 - state.leftPlayer.height / 2;
     state.rightPlayer.y = state.viewport.height / 2 - state.rightPlayer.height / 2;
+    state.serveDelay = SERVE_DELAY;
 }
 
 function randomServeVelocity(state) {

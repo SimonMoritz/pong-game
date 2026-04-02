@@ -7,6 +7,7 @@
 body {
     background-color: black;
     overflow: hidden;
+    user-select: none;
 }
 
 canvas#gb {
@@ -16,8 +17,10 @@ canvas#gb {
     left: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     background-color: black;
     cursor: pointer;
+    touch-action: none;
 }
 
 /* HUD floats over the canvas */

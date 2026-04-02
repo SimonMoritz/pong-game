@@ -6,11 +6,16 @@ const canvas = document.getElementById('gb');
 const leftScoreLabel = document.getElementById('leftScore');
 const rightScoreLabel = document.getElementById('rightScore');
 const aiToggleButton = document.getElementById('aiToggle');
-const keys = createInputHandler();
+const isMobile = 'ontouchstart' in window;
+const { keys, touch } = createInputHandler(canvas);
 const viewport = {
     width: 0,
     height: 0,
 };
+
+if (isMobile) {
+    aiToggleButton.style.display = 'none';
+}
 
 const worker = new Worker('./game-worker.js', { type: 'module' });
 
@@ -51,8 +56,9 @@ worker.addEventListener('message', (event) => {
 
 function resizeCanvas() {
     const dpr = window.devicePixelRatio || 1;
-    viewport.width = window.innerWidth;
-    viewport.height = window.innerHeight;
+    const vv = window.visualViewport;
+    viewport.width = vv ? vv.width : window.innerWidth;
+    viewport.height = vv ? vv.height : window.innerHeight;
     canvas.width = viewport.width * dpr;
     canvas.height = viewport.height * dpr;
     renderer = createRenderer(canvas, viewport);
@@ -62,6 +68,8 @@ function resizeCanvas() {
     worker.postMessage({
         type: 'resize',
         viewport,
+        mobile: isMobile,
+        aiEnabled: isMobile ? true : undefined,
     });
 }
 
@@ -73,13 +81,6 @@ function startGame() {
     pendingDt = 0;
     tickInFlight = false;
     worker.postMessage({ type: 'start' });
-}
-
-function stopGame() {
-    worker.postMessage({ type: 'stop' });
-    stopAnimationLoop();
-    pendingDt = 0;
-    tickInFlight = false;
 }
 
 function gameLoop(currentTime) {
@@ -115,6 +116,8 @@ function flushTick() {
             s: keys.s,
             arrowUp: keys.arrowUp,
             arrowDown: keys.arrowDown,
+            leftTouchY: touch.leftY,
+            rightTouchY: touch.rightY,
         },
     });
 }
@@ -159,10 +162,14 @@ function stopAnimationLoop() {
 
 // --- Event wiring ---
 let resizeTimer = null;
-window.addEventListener('resize', () => {
+function debouncedResize() {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(resizeCanvas, 100);
-});
+}
+window.addEventListener('resize', debouncedResize);
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', debouncedResize);
+}
 resizeCanvas();
 
 aiToggleButton.addEventListener('click', () => {
@@ -175,9 +182,12 @@ aiToggleButton.addEventListener('click', () => {
 });
 
 canvas.addEventListener('click', () => {
-    if (!currentState || !currentState.playing) {
-        startGame();
-    } else {
-        stopGame();
-    }
+    startGame();
+});
+
+// touchstart preventDefault in input.js suppresses the synthetic click on mobile,
+// so handle tap-to-start directly via touchend.
+canvas.addEventListener('touchend', (e) => {
+    if (e.changedTouches.length !== 1) return;
+    startGame();
 });

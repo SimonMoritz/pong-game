@@ -24,14 +24,18 @@ self.addEventListener('message', (event) => {
             if (!state) {
                 state = createGameState(message.viewport, {
                     aiEnabled: message.aiEnabled,
+                    mobile: message.mobile,
                 });
             } else {
+                if (message.mobile !== undefined) state.mobile = message.mobile;
+                if (message.aiEnabled !== undefined) state.aiEnabled = message.aiEnabled;
                 resizeGameState(state, message.viewport);
             }
             postFrame();
             break;
         case 'setAiEnabled':
             if (!state) return;
+            if (state.mobile) return;
             setAiEnabled(state, message.value);
             postFrame();
             break;
