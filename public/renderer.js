@@ -5,6 +5,20 @@ export function createRenderer(canvas, viewport) {
     const dpr = canvas.width / viewport.width;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+    // Pre-render the dashed center divider to a narrow offscreen strip.
+    // Only the strip (~4px wide) is cached, not the full screen.
+    const stripWidth = 4;
+    const dividerStrip = new OffscreenCanvas(stripWidth * dpr, viewport.height * dpr);
+    const stripCtx = dividerStrip.getContext('2d');
+    stripCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    stripCtx.strokeStyle = 'rgba(255,255,255,0.15)';
+    stripCtx.setLineDash([12, 12]);
+    stripCtx.lineWidth = 2;
+    stripCtx.beginPath();
+    stripCtx.moveTo(stripWidth / 2, 0);
+    stripCtx.lineTo(stripWidth / 2, viewport.height);
+    stripCtx.stroke();
+
     function drawTrumpHead(ball) {
         const bx = Math.round(ball.x);
         const by = Math.round(ball.y);
@@ -108,15 +122,8 @@ export function createRenderer(canvas, viewport) {
             ctx.fillStyle = 'black';
             ctx.fillRect(0, 0, viewport.width, viewport.height);
 
-            // Center divider
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-            ctx.setLineDash([12, 12]);
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(viewport.width / 2, 0);
-            ctx.lineTo(viewport.width / 2, viewport.height);
-            ctx.stroke();
-            ctx.setLineDash([]);
+            // Center divider — blit pre-rendered narrow strip
+            ctx.drawImage(dividerStrip, viewport.width / 2 - stripWidth / 2, 0, stripWidth, viewport.height);
 
             // Paddles
             ctx.fillStyle = 'white';
