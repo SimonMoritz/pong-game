@@ -1,11 +1,17 @@
 import { GAME, scaledConfig, relativeHit, Ball, Player } from './game-logic.js';
 
 const DEFAULT_PROMPT = 'Click to play';
-const DEFAULT_SUBTITLE = 'W / S · left    ↑ / ↓ · right';
+const AI_SUBTITLE = 'W / S · move paddle';
+const TWO_PLAYER_SUBTITLE = 'W / S · left    ↑ / ↓ · right';
 const MOBILE_PROMPT = 'Tap to play';
 const MOBILE_SUBTITLE = null;
 const RESTART_SUBTITLE = 'Click to play again';
 const MOBILE_RESTART_SUBTITLE = 'Tap to play again';
+
+function defaultSubtitle(state) {
+    if (state.mobile) return MOBILE_SUBTITLE;
+    return state.aiEnabled ? AI_SUBTITLE : TWO_PLAYER_SUBTITLE;
+}
 const SERVE_DELAY = 1.0;
 
 // --- State creation ---
@@ -28,10 +34,11 @@ export function createGameState(viewport, options = {}) {
         playing: false,
         serveDelay: 0,
         prompt: mobile ? MOBILE_PROMPT : DEFAULT_PROMPT,
-        subtitle: mobile ? MOBILE_SUBTITLE : DEFAULT_SUBTITLE,
+        subtitle: null,
         randomSource: options.random ?? Math.random,
     };
 
+    state.subtitle = defaultSubtitle(state);
     initialiseEntities(state);
 
     return state;
@@ -44,7 +51,7 @@ export function resizeGameState(state, viewport) {
     };
     state.playing = false;
     state.prompt = state.mobile ? MOBILE_PROMPT : DEFAULT_PROMPT;
-    state.subtitle = state.mobile ? MOBILE_SUBTITLE : DEFAULT_SUBTITLE;
+    state.subtitle = defaultSubtitle(state);
 
     initialiseEntities(state);
 
@@ -55,13 +62,19 @@ export function resizeGameState(state, viewport) {
 
 export function setAiEnabled(state, value) {
     state.aiEnabled = value;
+    if (!state.playing && state.prompt && !state.leftScore && !state.rightScore) {
+        state.subtitle = defaultSubtitle(state);
+    }
     return getGameSnapshot(state);
 }
 
 export function startGame(state) {
+    state.leftScore = 0;
+    state.rightScore = 0;
     state.playing = true;
     state.prompt = null;
     state.subtitle = null;
+    initialiseEntities(state);
     return getGameSnapshot(state);
 }
 
@@ -85,6 +98,8 @@ export function stepGame(state, input, dt) {
     if (state.serveDelay > 0) {
         state.serveDelay = Math.max(0, state.serveDelay - dt);
     } else {
+        state.ball.prevX = state.ball.x;
+
         if (state.ball.move(dt)) {
             events.push('wallBounce');
         }
@@ -178,13 +193,16 @@ function moveAiPaddle(state, dt) {
 
 function reflectLeft(state) {
     const { ball, leftPlayer, config } = state;
+    const paddleRight = config.PADDLE_OFFSET + leftPlayer.width;
 
-    if (config.PADDLE_OFFSET <= ball.x && ball.x <= config.PADDLE_OFFSET + leftPlayer.width) {
+    // Only reflect if the ball crossed the paddle face this frame
+    if (ball.prevX >= paddleRight && ball.x <= paddleRight) {
         const relativeBallPosition = ball.y - leftPlayer.y;
         if (0 <= relativeBallPosition && relativeBallPosition <= leftPlayer.height) {
-            ball.velX *= -1;
-            const newSpeed = Math.min(Math.abs(ball.velX) * 1.05, config.MAX_BALL_SPEED_X);
-            ball.velX = ball.velX < 0 ? -newSpeed : newSpeed;
+            ball.x = paddleRight;
+            ball.velX = Math.abs(ball.velX);
+            const newSpeed = Math.min(ball.velX * 1.05, config.MAX_BALL_SPEED_X);
+            ball.velX = newSpeed;
             ball.velY += relativeHit(relativeBallPosition, config) * config.BALL_SPEED_X;
             ball.velY = clamp(ball.velY, -config.MAX_BALL_SPEED_Y, config.MAX_BALL_SPEED_Y);
             return true;
@@ -196,14 +214,16 @@ function reflectLeft(state) {
 
 function reflectRight(state) {
     const { ball, rightPlayer, config, viewport } = state;
-    const rightEdge = viewport.width - config.PADDLE_OFFSET - rightPlayer.width;
+    const paddleLeft = viewport.width - config.PADDLE_OFFSET - rightPlayer.width;
 
-    if (rightEdge <= ball.x && ball.x <= viewport.width - config.PADDLE_OFFSET) {
+    // Only reflect if the ball crossed the paddle face this frame
+    if (ball.prevX <= paddleLeft && ball.x >= paddleLeft) {
         const relativeBallPosition = ball.y - rightPlayer.y;
         if (0 <= relativeBallPosition && relativeBallPosition <= rightPlayer.height) {
-            ball.velX *= -1;
+            ball.x = paddleLeft;
+            ball.velX = -Math.abs(ball.velX);
             const newSpeed = Math.min(Math.abs(ball.velX) * 1.05, config.MAX_BALL_SPEED_X);
-            ball.velX = ball.velX < 0 ? -newSpeed : newSpeed;
+            ball.velX = -newSpeed;
             ball.velY += relativeHit(relativeBallPosition, config) * config.BALL_SPEED_X;
             ball.velY = clamp(ball.velY, -config.MAX_BALL_SPEED_Y, config.MAX_BALL_SPEED_Y);
             return true;
@@ -250,8 +270,6 @@ function incrementScore(state, side) {
 }
 
 function resetScore(state) {
-    state.leftScore = 0;
-    state.rightScore = 0;
     state.playing = false;
 }
 
