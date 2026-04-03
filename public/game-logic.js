@@ -74,12 +74,24 @@ class Ball {
 
     // Returns true if the ball bounced off a wall this frame.
     move(dt) {
-        const { WALL_MARGIN, BALL_SIZE } = this.config;
-        const bounced = this.y < WALL_MARGIN || this.y > this.canvasHeight - BALL_SIZE - WALL_MARGIN;
-        if (bounced) this.velY *= -1;
         this.x += this.velX * dt;
         this.y += this.velY * dt;
-        return bounced;
+
+        const { WALL_MARGIN, BALL_SIZE } = this.config;
+        const minY = WALL_MARGIN;
+        const maxY = this.canvasHeight - BALL_SIZE - WALL_MARGIN;
+
+        if (this.y < minY) {
+            this.y = minY + (minY - this.y);
+            this.velY = Math.abs(this.velY);
+            return true;
+        }
+        if (this.y > maxY) {
+            this.y = maxY - (this.y - maxY);
+            this.velY = -Math.abs(this.velY);
+            return true;
+        }
+        return false;
     }
 }
 

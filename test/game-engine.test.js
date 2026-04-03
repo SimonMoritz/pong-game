@@ -84,20 +84,23 @@ test('stepGame increments the right score when the ball exits the left edge', ()
 
 test('stepGame emits a paddleHit event when the ball hits the left paddle', () => {
     const state = createGameState(CANVAS, { random: () => 0.5 });
+    const paddleRight = state.config.PADDLE_OFFSET + state.leftPlayer.width;
 
     startGame(state);
     state.leftPlayer.y = 50;
-    state.ball.x = state.config.PADDLE_OFFSET + 1;
+    // Place ball just to the right of the paddle face, moving left
+    state.ball.x = paddleRight + 5;
     state.ball.y = state.leftPlayer.y + state.leftPlayer.height / 2;
     state.ball.velX = -state.config.BALL_SPEED_X;
     state.ball.velY = 0;
 
+    // dt large enough for the ball to cross the paddle face
     const result = stepGame(state, {
         w: false,
         s: false,
         arrowUp: false,
         arrowDown: false,
-    }, 0);
+    }, 0.1);
 
     assert.deepEqual(result.events, ['paddleHit']);
     assert.ok(state.ball.velX > 0, `velX should be positive after paddle hit, got ${state.ball.velX}`);
