@@ -19,9 +19,16 @@ test('createGameState starts paused with the default prompt', () => {
 
     assert.equal(snapshot.playing, false);
     assert.equal(snapshot.prompt, 'Click to play');
-    assert.equal(snapshot.subtitle, 'W / S · left    ↑ / ↓ · right');
+    assert.equal(snapshot.subtitle, 'W / S · move paddle');
     assert.equal(snapshot.scores.left, 0);
     assert.equal(snapshot.scores.right, 0);
+});
+
+test('createGameState shows both player controls when AI is disabled', () => {
+    const state = createGameState(CANVAS, { random: () => 0.5, aiEnabled: false });
+    const snapshot = getGameSnapshot(state);
+
+    assert.equal(snapshot.subtitle, 'W / S · left    ↑ / ↓ · right');
 });
 
 test('startGame and stopGame toggle the playing flag without mutating scores', () => {
@@ -96,7 +103,7 @@ test('stepGame emits a paddleHit event when the ball hits the left paddle', () =
     assert.ok(state.ball.velX > 0, `velX should be positive after paddle hit, got ${state.ball.velX}`);
 });
 
-test('winning a round resets the scoreboard and publishes the winner prompt', () => {
+test('winning a round stops the game and publishes the winner prompt with final scores', () => {
     const state = createGameState(CANVAS, { random: () => 0.5 });
 
     startGame(state);
@@ -114,12 +121,12 @@ test('winning a round resets the scoreboard and publishes the winner prompt', ()
     assert.deepEqual(result.events, ['score']);
     assert.equal(result.state.playing, false);
     assert.equal(result.state.scores.left, 0);
-    assert.equal(result.state.scores.right, 0);
+    assert.equal(result.state.scores.right, GAME.WIN_SCORE);
     assert.equal(result.state.prompt, 'AI wins');
     assert.equal(result.state.subtitle, 'Click to play again');
 });
 
-test('winning against the AI publishes the human winner prompt', () => {
+test('winning against the AI publishes the human winner prompt with final scores', () => {
     const state = createGameState(CANVAS, { random: () => 0.5, aiEnabled: true });
 
     startGame(state);
@@ -136,7 +143,7 @@ test('winning against the AI publishes the human winner prompt', () => {
 
     assert.deepEqual(result.events, ['score']);
     assert.equal(result.state.playing, false);
-    assert.equal(result.state.scores.left, 0);
+    assert.equal(result.state.scores.left, GAME.WIN_SCORE);
     assert.equal(result.state.scores.right, 0);
     assert.equal(result.state.prompt, 'Human wins!');
     assert.equal(result.state.subtitle, 'Click to play again');
@@ -172,7 +179,7 @@ test('resizeGameState preserves scores but resets play state to the default prom
 
     assert.equal(snapshot.playing, false);
     assert.equal(snapshot.prompt, 'Click to play');
-    assert.equal(snapshot.subtitle, 'W / S · left    ↑ / ↓ · right');
+    assert.equal(snapshot.subtitle, 'W / S · left    ↑ / ↓ · right');  // AI is off
     assert.equal(snapshot.scores.left, 3);
     assert.equal(snapshot.scores.right, 4);
     assert.equal(snapshot.aiEnabled, false);

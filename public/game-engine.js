@@ -1,11 +1,17 @@
 import { GAME, scaledConfig, relativeHit, Ball, Player } from './game-logic.js';
 
 const DEFAULT_PROMPT = 'Click to play';
-const DEFAULT_SUBTITLE = 'W / S · left    ↑ / ↓ · right';
+const AI_SUBTITLE = 'W / S · move paddle';
+const TWO_PLAYER_SUBTITLE = 'W / S · left    ↑ / ↓ · right';
 const MOBILE_PROMPT = 'Tap to play';
 const MOBILE_SUBTITLE = null;
 const RESTART_SUBTITLE = 'Click to play again';
 const MOBILE_RESTART_SUBTITLE = 'Tap to play again';
+
+function defaultSubtitle(state) {
+    if (state.mobile) return MOBILE_SUBTITLE;
+    return state.aiEnabled ? AI_SUBTITLE : TWO_PLAYER_SUBTITLE;
+}
 const SERVE_DELAY = 1.0;
 
 // --- State creation ---
@@ -28,10 +34,11 @@ export function createGameState(viewport, options = {}) {
         playing: false,
         serveDelay: 0,
         prompt: mobile ? MOBILE_PROMPT : DEFAULT_PROMPT,
-        subtitle: mobile ? MOBILE_SUBTITLE : DEFAULT_SUBTITLE,
+        subtitle: null,
         randomSource: options.random ?? Math.random,
     };
 
+    state.subtitle = defaultSubtitle(state);
     initialiseEntities(state);
 
     return state;
@@ -44,7 +51,7 @@ export function resizeGameState(state, viewport) {
     };
     state.playing = false;
     state.prompt = state.mobile ? MOBILE_PROMPT : DEFAULT_PROMPT;
-    state.subtitle = state.mobile ? MOBILE_SUBTITLE : DEFAULT_SUBTITLE;
+    state.subtitle = defaultSubtitle(state);
 
     initialiseEntities(state);
 
@@ -55,13 +62,19 @@ export function resizeGameState(state, viewport) {
 
 export function setAiEnabled(state, value) {
     state.aiEnabled = value;
+    if (!state.playing && state.prompt && !state.leftScore && !state.rightScore) {
+        state.subtitle = defaultSubtitle(state);
+    }
     return getGameSnapshot(state);
 }
 
 export function startGame(state) {
+    state.leftScore = 0;
+    state.rightScore = 0;
     state.playing = true;
     state.prompt = null;
     state.subtitle = null;
+    initialiseEntities(state);
     return getGameSnapshot(state);
 }
 
@@ -250,8 +263,6 @@ function incrementScore(state, side) {
 }
 
 function resetScore(state) {
-    state.leftScore = 0;
-    state.rightScore = 0;
     state.playing = false;
 }
 
