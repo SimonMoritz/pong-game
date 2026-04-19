@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <clipPath id="clip"><rect x="0" y="0" width="512" height="512" rx="115.2" ry="115.2"/></clipPath>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <radialGradient id="vign" cx="50%" cy="50%" r="70%">
+      <stop offset="45%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.35"/>
+    </radialGradient>
+    <pattern id="scan" width="4" height="5" patternUnits="userSpaceOnUse">
+      <rect width="4" height="1" fill="rgba(0,0,0,0.04)"/>
+    </pattern>
+  </defs>
+  <g clip-path="url(#clip)">
+    <rect width="512" height="512" fill="#020503"/>
+    <rect x="255" y="30.72" width="2" height="14.08" fill="rgba(180,255,200,0.3)"/>
+    <rect x="255" y="58.879999999999995" width="2" height="14.08" fill="rgba(180,255,200,0.3)"/>
+    <rect x="255" y="87.03999999999999" width="2" height="14.08" fill="rgba(180,255,200,0.3)"/>
+    <rect x="255" y="115.19999999999999" width="2" height="14.08" fill="rgba(180,255,200,0.3)"/>
+    <rect x="255" y="143.35999999999999" width="2" height="14.08" fill="rgba(180,255,200,0.3)"/>
+    <rect x="255" y="171.51999999999998" width="2" height="14.08" fill="rgba(180,255,200,0.3)"/>
+    <rect x="255" y="199.67999999999998" width="2" height="14.08" fill="rgba(180,255,200,0.3)"/>
+    <rect x="255" y="227.83999999999997" width="2" height="14.08" fill="rgba(180,255,200,0.3)"/>
+    <rect x="255" y="255.99999999999997" width="2" height="14.08" fill="rgba(180,255,200,0.3)"/>
+    <rect x="255" y="284.15999999999997" width="2" height="14.08" fill="rgba(180,255,200,0.3)"/>
+    <rect x="255" y="312.32" width="2" height="14.08" fill="rgba(180,255,200,0.3)"/>
+    <rect x="255" y="340.48" width="2" height="14.08" fill="rgba(180,255,200,0.3)"/>
+    <rect x="255" y="368.64000000000004" width="2" height="14.08" fill="rgba(180,255,200,0.3)"/>
+    <rect x="255" y="396.80000000000007" width="2" height="14.08" fill="rgba(180,255,200,0.3)"/>
+    <rect x="255" y="424.9600000000001" width="2" height="14.08" fill="rgba(180,255,200,0.3)"/>
+    <rect x="255" y="453.1200000000001" width="2" height="14.08" fill="rgba(180,255,200,0.3)"/>
+    <g filter="url(#glow)">
+      <rect x="66.56" y="112.64" width="28.16" height="163.84" fill="#d6ffe0"/>
+      <rect x="417.28" y="235.52" width="28.16" height="163.84" fill="#d6ffe0"/>
+      <rect x="296.96" y="215.04" width="51.2" height="51.2" fill="#ffffff"/>
+    </g>
+    <rect width="512" height="512" fill="url(#scan)"/>
+    <rect width="512" height="512" fill="url(#vign)"/>
+  </g>
+</svg>
